@@ -50,7 +50,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
   add_message_files(
     FILES
-    3Steer.msg
+    Steer.msg
 #   Message1.msg
 #   Message2.msg
   )
