@@ -8,13 +8,18 @@
 #define PIN_B_SIX 2 //-> 0
 #define PIN_A_TEN 21 //-> 2
 #define PIN_B_TEN 20 //-> 3
+#define PIN_1A 8
+#define PIN_1B 7
+#define PIN_2A 6
+#define PIN_2B 5
+#define PIN_DIR2 15
+#define PIN_PWM2 16
 #define OBJECT_NUM 3 // モータ(エンコーダ)の個数
 #define OBJECT_TWO 0
 #define OBJECT_SIX 1
 #define OBJECT_TEN 2
 extern float SPEED_NOW[OBJECT_NUM]; // publishに使用
 extern long PULSE_NOW[OBJECT_NUM]; // パルス数
-extern float PERIOD; // delayの引数[ms]
 
 class encoder{
   private:
@@ -25,14 +30,6 @@ class encoder{
   public:
     encoder(int A, int B);
     void getSPEED(int object); // 現在の速度の取得
-};
-class motor{
-  private:
-    int POW, DIR;
-  public:
-    int PWM = 0;
-    motor(int P1, int P2);
-    void Write(); // 速度の出力
 };
 
 void counterTWO();

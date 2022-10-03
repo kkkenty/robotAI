@@ -27,25 +27,6 @@ void encoder::getSPEED(int object){
   }
 }
 
-motor::motor(int P1, int P2){
-  POW = P1; DIR = P2;
-  pinMode(POW, OUTPUT);
-  pinMode(DIR, OUTPUT);
-}
-void motor::Write(){
-  if(PWM > 255 ) PWM = 255; // 上限・下限の設定
-  else if(PWM < -255) PWM = -255;
-  
-  if(PWM >= 0){
-    analogWrite(POW, PWM);
-    digitalWrite(DIR, LOW);
-  }
-  else if(PWM < 0){
-    analogWrite(POW, -PWM);
-    digitalWrite(DIR, HIGH);
-  }
-  //Serial.println(PWM);
-}
 // 外部割り込み処理
 void counterTWO(){
   nowSig_A[OBJECT_TWO] = digitalRead(PIN_A_TWO);

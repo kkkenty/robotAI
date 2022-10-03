@@ -1,5 +1,6 @@
 // joystickを使って、PWM値を配信する
 // 左右のstickで1ユニットのモータを動かす
+// msgs型を変えたので今のところは使えない
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
 #include <msgs/Steer.h>

@@ -52,6 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
     FILES
     SteerSensor.msg
     SteerPower.msg
+    PID.msg
 #   Message1.msg
 #   Message2.msg
   )
