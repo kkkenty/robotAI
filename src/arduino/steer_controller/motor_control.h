@@ -13,6 +13,7 @@
 #define OBJECT_SIX 1
 #define OBJECT_TEN 2
 extern float SPEED_NOW[OBJECT_NUM]; // publishに使用
+extern long PULSE_NOW[OBJECT_NUM]; // パルス数
 extern float PERIOD; // delayの引数[ms]
 
 class encoder{
@@ -34,7 +35,9 @@ class motor{
     void Write(); // 速度の出力
 };
 
-void counter0();
-void counter1();
+void counterTWO();
+void counterSIX();
+void counterTEN();
+void counterPULSE(int object);
 
 #endif
