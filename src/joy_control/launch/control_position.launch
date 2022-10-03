@@ -14,9 +14,9 @@
       <param name="MAX_Drive_PWM" value="255"/>
       <param name="MAX_Steer_PWM" value="255"/>
       <param name="FRIQUENCY" value="50"/>
-      <param name="yaw_kp" value="25"/>
-      <param name="yaw_ki" value="0"/>
-      <param name="yaw_kd" value="0"/>
+      <param name="yaw_kp" value="200"/>
+      <param name="yaw_ki" value="0.25"/>
+      <param name="yaw_kd" value="0.5"/>
     </node>
   </group>
 

@@ -55,6 +55,7 @@ feedback TWO, SIX, TEN;
 
 void joyCb(const sensor_msgs::Joy &joy_msg)
 {
+  
   for(i=1;i<5;i++){
       if(joy_msg.buttons[i-1] == 1){
           unit = i; // ここでunitの値が変わらない限り、PWMは変わらない
@@ -62,19 +63,24 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
           break;
       }
   }
+  /*
   switch(unit){
     case OBJECT_TEN:
-        TEN.AngleGoal = atan2(joy_msg.axes[1],-joy_msg.axes[0]);
+        TEN.AngleGoal = -atan2(joy_msg.axes[1],-joy_msg.axes[0]);
         break;
     case OBJECT_SIX:
-        SIX.AngleGoal = atan2(joy_msg.axes[1],-joy_msg.axes[0]);
+        SIX.AngleGoal = -atan2(joy_msg.axes[1],-joy_msg.axes[0]);
         break;
     case OBJECT_TWO:
-        TWO.AngleGoal = atan2(joy_msg.axes[1],-joy_msg.axes[0]);
+        TWO.AngleGoal = -atan2(joy_msg.axes[1],-joy_msg.axes[0]);
         break;
     default:
         break;
-  }
+    }
+    */
+    TWO.AngleGoal = -atan2(joy_msg.axes[1],-joy_msg.axes[0]);
+    SIX.AngleGoal = -atan2(joy_msg.axes[1],-joy_msg.axes[0]);
+    TEN.AngleGoal = -atan2(joy_msg.axes[1],-joy_msg.axes[0]);
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
@@ -106,15 +112,16 @@ int main(int argc, char **argv)
         SIX.cal_angle();
         TEN.cal_angle();
         ROS_INFO("\n");
-        PWM.SteerTwo = TWO.PID();
-        PWM.SteerSix = SIX.PID();
-        PWM.SteerTen = TEN.PID();
+        PWM.SteerTwo = -TWO.PID();
+        PWM.SteerSix = -SIX.PID();
+        PWM.SteerTen = -TEN.PID();
         if(unit == 2){
             PWM.SteerTwo = 0;
             PWM.SteerSix = 0;
             PWM.SteerTen = 0;
         }
         str_ard_pub.publish(PWM);
+        dbg_pub.publish(param);
         ros::spinOnce();
         loop_rate.sleep();
     }
