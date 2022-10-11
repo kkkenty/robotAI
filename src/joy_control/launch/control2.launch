@@ -1,0 +1,33 @@
+<launch>
+  <arg name="joystick" 		default="true"/>
+  <arg name="controller" 	default="true"/>
+  <arg name="arduino" 		default="true"/>
+
+  <group if="$(arg joystick)">
+    <node name="joystick" pkg="joy" type="joy_node" required="true">
+      <param name="dev" value="/dev/input/js2"/>
+    </node>
+  </group>
+
+  <group if="$(arg controller)">
+    <node name="controller2" pkg="joy_control" type="controller2" output="screen" required="true">
+      <param name="MAX_Drive_PWM" value="255"/>
+      <param name="MAX_Steer_PWM" value="255"/>
+      <param name="FRIQUENCY" value="50"/>
+      <param name="STRKP" value="200"/>
+      <param name="STRKI" value="0.25"/>
+      <param name="STRKD" value="0.5"/>
+      <param name="DRVKP" value="200"/>
+      <param name="DRVKI" value="0.25"/>
+      <param name="DRVKD" value="0.5"/>
+      <param name="RADIUS" value="133.414"/>
+    </node>
+  </group>
+
+  <group if="$(arg arduino)">
+    <node pkg="rosserial_python" type="serial_node.py" name="arduino" required="true">
+      <param name="port" value="/dev/ttyACM0"/>
+      <param name="baud" value="57600"/>
+    </node>
+  </group>
+</launch>
