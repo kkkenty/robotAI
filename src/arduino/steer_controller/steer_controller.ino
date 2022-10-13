@@ -5,19 +5,19 @@
 #include "msgs/SteerSensor.h"
 #include "msgs/SteerPower.h"
 #include "CytronMotorDriver.h"
-const float FRIQUENCY = 50.0;
+const float FRIQUENCY = 100.0;
 float PERIOD; // delayの引数[ms]
-int PWM[OBJECT_NUM] = {0}, i;
+int PWM[] = {0, 0, 0}, i;
 msgs::SteerSensor Sensor;
 encoder enc_two(PIN_A_TWO, PIN_B_TWO);
 encoder enc_six(PIN_A_SIX, PIN_B_SIX);
 encoder enc_ten(PIN_A_TEN, PIN_B_TEN);
 CytronMD motorTWO(PWM_PWM, PIN_1A, PIN_1B);
 CytronMD motorSIX(PWM_PWM, PIN_2A, PIN_2B); 
-CytronMD motorTEN(PWM_DIR, PIN_PWM2, PIN_DIR2); 
+CytronMD motorTEN(PWM_PWM, PIN_3A, PIN_3B); 
 
 ros::NodeHandle nh;
-ros::Publisher pub("encoder", &Sensor);
+ros::Publisher pub("StrEncoder", &Sensor);
 
 void powerCb(const msgs::SteerPower& get_msg){
   PWM[OBJECT_TWO] = (int)get_msg.SteerTwo;
@@ -25,10 +25,10 @@ void powerCb(const msgs::SteerPower& get_msg){
   PWM[OBJECT_TEN] = (int)get_msg.SteerTen;
 }
 
-ros::Subscriber<msgs::SteerPower> sub("power", &powerCb);
+ros::Subscriber<msgs::SteerPower> sub("StrPower", &powerCb);
 
 void setup() {
-  Serial.begin(57600);
+  nh.getHardware()->setBaud(57600);
   attachInterrupt(5, counterTWO, CHANGE);
   attachInterrupt(4, counterTWO, CHANGE);
   attachInterrupt(3, counterTEN, CHANGE);
@@ -39,22 +39,20 @@ void setup() {
   nh.advertise(pub);
   nh.subscribe(sub);
   PERIOD = 1000.0/FRIQUENCY;  
+  PWM[OBJECT_TWO] = 0; PWM[OBJECT_SIX] = 0; PWM[OBJECT_TEN] = 0;
+  Sensor.PulseTwo = 0; Sensor.PulseSix = 0; Sensor.PulseTen = 0;
 }
 
 void loop() {
-  // 現在の速度の取得 //
-  enc_two.getSPEED(OBJECT_TWO);
-  enc_six.getSPEED(OBJECT_SIX);
-  enc_ten.getSPEED(OBJECT_TEN);
+  // 現在の回転数の取得 //
+  enc_two.getPULSE(OBJECT_TWO);
+  enc_six.getPULSE(OBJECT_SIX);
+  enc_ten.getPULSE(OBJECT_TEN);
+  
   Sensor.PulseTwo = PULSE_NOW[OBJECT_TWO];
   Sensor.PulseSix = PULSE_NOW[OBJECT_SIX];
   Sensor.PulseTen = PULSE_NOW[OBJECT_TEN];
   /*
-  Sensor.SpeedTwo = SPEED_NOW[OBJECT_TWO];
-  Sensor.SpeedSix = SPEED_NOW[OBJECT_SIX];
-  Sensor.SpeedTen = SPEED_NOW[OBJECT_TEN];
-  */
-  /* 
   Serial.print(PULSE_NOW[OBJECT_TWO]); // debug
   Serial.print("  :  ");
   Serial.print(PULSE_NOW[OBJECT_SIX]);

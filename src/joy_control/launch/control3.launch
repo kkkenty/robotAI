@@ -12,14 +12,18 @@
   <group if="$(arg controller)">
     <node name="controller3" pkg="joy_control" type="controller3" output="screen" required="true">
       <param name="MAX_Drive_PWM" value="255"/>
-      <param name="MAX_Steer_PWM" value="255"/>
-      <param name="FRIQUENCY" value="50"/>
-      <param name="YAWKP" value="200"/>
-      <param name="YAWKI" value="0.25"/>
-      <param name="YAWKD" value="0.5"/>
-      <param name="KV" value="5.0"/>
-      <param name="KW" value="10.0"/>
-      <param name="RADIUS" value="133.414"/>
+      <param name="MAX_Steer_PWM" value="235"/> <!-- 240くらいからオーバーシュートする -->
+      <param name="FRIQUENCY" value="100"/>
+      <param name="STRKP" value="140"/> <!-- 150以上だと少しオーバーシュートする -->>
+      <param name="STRKI" value="0.01"/> 
+      <param name="STRKD" value="0.0"/>
+      <param name="DRVKP" value="200"/>
+      <param name="DRVKI" value="0.25"/>
+      <param name="DRVKD" value="0.5"/>
+      <param name="STROFFSET" value="10"/> 
+      <param name="RADIUS" value="0.133414"/>
+      <param name="KV" value="1.0"/>
+      <param name="KW" value="5.0"/>
     </node>
   </group>
 

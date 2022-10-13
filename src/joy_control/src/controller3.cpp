@@ -9,85 +9,112 @@
 #define OBJECT_SIX 3
 #define OBJECT_TEN 1
 
-msgs::SteerPower PWM;
-msgs::PID param;
-int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100;
-int unit = 2, state = 0, i;
-float YAWKP = 0.0, YAWKI = 0.0, YAWKD = 0.0;
+msgs::SteerPower StrPwm, DrvPwm;
+int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100, RESOLUTION = 10240, STROFFSET = 10;
+int state = 0, i;
+float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0, RADIUS = 133.414, KV = 5.0, KW = 10.0;
 float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
-float KV = 5.0, KW = 10.0, RADIUS = 133.414;
 const float ROOT3 = 1.7320508;
 
 class feedback{
     private:
-        float AngleNow = 0.0, AngleError = 0.0, AngleSum = 0.0, AngleErrorPre = 0.0;
-        float AngleSpd = 0.0, AnglePre = 0.0;
+        float Sum = 0.0, ErrorPre = 0.0, Dif = 0.0, Pre = 0.0;
         int Power = 0;
     public:
-        int GetPulse = 0;
-        double AngleGoal = 0.0;
-        void cal_angle();
+        int GetPulse = 0, offset = 0;
+        float Now = 0.0, Goal = 0.0, Error = 0.0, kp = 0.0, ki = 0.0, kd = 0.0;
+        msgs::PID param;
         int PID();
 };
-void feedback::cal_angle(){
-    AngleNow = (double) GetPulse / 10240 * M_PI;
-    //ROS_INFO("  %lf  ", AngleNow / M_PI * 180.0);
-    //ROS_INFO("  %lf  ", AngleGoal / M_PI * 180.0);
-}
 int feedback::PID(){
-    AngleError = AngleGoal - AngleNow; // P項
-    AngleSum += (AngleError + AngleErrorPre) / 2.0; // I項
-    AngleSpd = (float)(AngleNow - AnglePre) * (float)FRIQUENCY; // D項
-    param.p = YAWKP * AngleError;
-    param.i = YAWKI * AngleSum;
-    param.d = YAWKD * AngleSpd;
+    Error = Goal - Now; // P項
+    Sum += (Error + ErrorPre) / 2.0; // I項
+    Dif = (float)(Now - Pre) * (float)FRIQUENCY; // D項
+    param.p = kp * Error;
+    param.i = ki * Sum;
+    param.d = kd * Dif;
     Power = (int)(param.p + param.i - param.d);
-    //ROS_INFO("  %lf   ", AngleError);
-    if(Power > MAX_Steer_PWM){
-        Power = MAX_Steer_PWM;
+    if(Power > 0){
+        Power += offset;
     }
-    if(Power < -MAX_Steer_PWM){
-        Power = -MAX_Steer_PWM;
+    else if(Power < 0){
+        Power -= offset;
     }
-    AngleErrorPre = AngleError;
-    AnglePre = AngleNow;
+    ErrorPre = Error;
+    Pre = Now;
     return Power;
 }
 
-feedback TWO, SIX, TEN;
+feedback StrTwo, StrSix, StrTen, DrvTwo, DrvSix, DrvTen;
 
 void joyCb(const sensor_msgs::Joy &joy_msg)
 {
-    // ロボットの目標並進速度vx,vy、目標角速度vwを算出
-    vx = KV * (-joy_msg.axes[0]);
-    vy = KV * joy_msg.axes[1];
-    vw = KW * joy_msg.axes[3];
-    // 各ステアユニットの目標速度を算出
-    /* vx,vy,vwが全て0のときは角度を維持するようにする(目標角度を更新しない)
-        もしうまく行かない場合は、安藤さんの内積を使う方式で試す */
-    if(!(vx == 0 && vy == 0 && vw == 0)){
-        vrw = RADIUS*vw;
-        TWO.AngleGoal = -atan2(2.0*vy+vrw, 2.0*vx+ROOT3*vrw);
-        SIX.AngleGoal = -atan2(vy-vrw, vx);
-        TEN.AngleGoal = -atan2(2.0*vy+vrw, 2.0*vx-ROOT3*vrw);
-    }
     // 2のボタンを押せば緊急停止する
     if(joy_msg.buttons[1]){
         state++;
         if(state % 2 == 1){
+            /*DrvPwm.DriveTwo = 0; DrvPwm.DriveSix = 0; DrvPwm.DriveTen = 0;
+            StrPwm.SteerTwo = 0; StrPwm.SteerSix = 0; StrPwm.SteerTen = 0; */
             ROS_INFO("STOPPING!");
         }
         else if(state % 2 == 0){
             ROS_INFO("RESTARTING!");
         }
     }
+    // ロボットの目標並進速度vx,vy、目標角速度vwを算出
+    vx = KV * joy_msg.axes[1];
+    vy = KV * joy_msg.axes[0];
+    vw = KW * joy_msg.axes[3];
+    // 各ステアユニットの目標速度を算出
+    /* vx,vy,vwが全て0のときは角度を維持するようにする(目標角度を更新しない)
+        もしうまく行かない場合は、安藤さんの内積を使う方式で試す */
+    if(!(vx == 0 && vy == 0 && vw == 0)){
+        vrw = RADIUS*vw;
+        StrTwo.Goal = -atan2(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
+        StrSix.Goal = -atan2(vy-vrw, vx);
+        StrTen.Goal = -atan2(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
+        ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+    }
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    // SteerArduinoからパルス情報を受け取る
-    TWO.GetPulse = Ardmsg.PulseTwo; 
-    SIX.GetPulse = Ardmsg.PulseSix;
-    TEN.GetPulse = Ardmsg.PulseTen;
+    StrTwo.Now = (float) Ardmsg.PulseTwo / RESOLUTION * M_PI;
+    StrSix.Now = (float) Ardmsg.PulseSix / RESOLUTION * M_PI;
+    StrTen.Now = (float) Ardmsg.PulseTen / RESOLUTION * M_PI;
+}
+void DrvArdCb(const msgs::SteerSensor &Ardmsg)
+{
+    DrvTwo.Now = Ardmsg.SpeedTwo / (float)RESOLUTION * M_PI * RADIUS;
+    DrvSix.Now = Ardmsg.SpeedSix / (float)RESOLUTION * M_PI * RADIUS;
+    DrvTen.Now = Ardmsg.SpeedTen / (float)RESOLUTION * M_PI * RADIUS;
+}
+void ParamSet(){
+    StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
+    StrTwo.ki = STRKI; StrSix.ki = STRKI; StrTen.ki = STRKI;
+    StrTwo.kd = STRKD; StrSix.kd = STRKD; StrTen.kd = STRKD;
+    DrvTwo.kp = DRVKP; DrvSix.kp = DRVKP; DrvTen.kp = DRVKP;
+    DrvTwo.ki = DRVKI; DrvSix.ki = DRVKI; DrvTen.ki = DRVKI;
+    DrvTwo.kd = DRVKD; DrvSix.kd = DRVKD; DrvTen.kd = DRVKD;
+    StrTwo.offset = STROFFSET; StrSix.offset = STROFFSET; StrTen.offset = STROFFSET;
+}
+void LimitPwm(){
+    if(StrPwm.SteerTwo > MAX_Steer_PWM) StrPwm.SteerTwo = MAX_Steer_PWM;
+    if(StrPwm.SteerSix > MAX_Steer_PWM) StrPwm.SteerSix = MAX_Steer_PWM;
+    if(StrPwm.SteerTen > MAX_Steer_PWM) StrPwm.SteerTen = MAX_Steer_PWM;
+    if(StrPwm.SteerTwo < -MAX_Steer_PWM) StrPwm.SteerTwo = -MAX_Steer_PWM;
+    if(StrPwm.SteerSix < -MAX_Steer_PWM) StrPwm.SteerSix = -MAX_Steer_PWM;
+    if(StrPwm.SteerTen < -MAX_Steer_PWM) StrPwm.SteerTen = -MAX_Steer_PWM;
+    if(DrvPwm.DriveTwo > MAX_Drive_PWM) DrvPwm.DriveTwo = MAX_Drive_PWM;
+    if(DrvPwm.DriveSix > MAX_Drive_PWM) DrvPwm.DriveSix = MAX_Drive_PWM;
+    if(DrvPwm.DriveTen > MAX_Drive_PWM) DrvPwm.DriveTen = MAX_Drive_PWM;
+    if(DrvPwm.DriveTwo < -MAX_Drive_PWM) DrvPwm.DriveTwo = -MAX_Drive_PWM;
+    if(DrvPwm.DriveSix < -MAX_Drive_PWM) DrvPwm.DriveSix = -MAX_Drive_PWM;
+    if(DrvPwm.DriveTen < -MAX_Drive_PWM) DrvPwm.DriveTen = -MAX_Drive_PWM;
+    if(state % 2 == 1){
+        DrvPwm.DriveTwo = 0; DrvPwm.DriveSix = 0; DrvPwm.DriveTen = 0;
+        StrPwm.SteerTwo = 0; StrPwm.SteerSix = 0; StrPwm.SteerTen = 0; 
+        return;
+    }
 }
 
 int main(int argc, char **argv)
@@ -95,38 +122,43 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "controller3");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
-    pnh.getParam("MAX_Drive_PWM", MAX_Drive_PWM);
-    pnh.getParam("MAX_Steer_PWM", MAX_Steer_PWM);
-    pnh.getParam("FRIQUENCY", FRIQUENCY);
-    pnh.getParam("YAWKP", YAWKP);
-    pnh.getParam("YAWKI", YAWKI);
-    pnh.getParam("YAWKD", YAWKD);
-    pnh.getParam("KV", KV);
-    pnh.getParam("KW", KW);
-    pnh.getParam("RADIUS", RADIUS);
+    pnh.getParamCached("MAX_Drive_PWM", MAX_Drive_PWM);
+    pnh.getParamCached("MAX_Steer_PWM", MAX_Steer_PWM);
+    pnh.getParamCached("FRIQUENCY", FRIQUENCY);
+    pnh.getParamCached("STRKP", STRKP);
+    pnh.getParamCached("STRKI", STRKI);
+    pnh.getParamCached("STRKD", STRKD);
+    pnh.getParamCached("DRVKP", DRVKP);
+    pnh.getParamCached("DRVKI", DRVKI);
+    pnh.getParamCached("DRVKD", DRVKD);
+    pnh.getParamCached("STROFFSET", STROFFSET);
+    pnh.getParamCached("RADIUS", RADIUS);
+    pnh.getParamCached("KV", KV);
+    pnh.getParamCached("KW", KW);
+    ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
-    ros::Subscriber str_ard_sub = nh.subscribe("encoder", 10, StrArdCb);
-    ros::Publisher str_ard_pub = nh.advertise<msgs::SteerPower>("power", 10);
+    ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);
+    ros::Subscriber drv_ard_sub = nh.subscribe("DrvEncoder", 10, DrvArdCb);
+    ros::Publisher str_ard_pub = nh.advertise<msgs::SteerPower>("StrPower", 10);
+    ros::Publisher drv_ard_pub = nh.advertise<msgs::SteerPower>("DrvPower", 10);
     ros::Publisher dbg_pub = nh.advertise<msgs::PID>("param", 10);
     ros::Rate loop_rate(FRIQUENCY);
 
     while (ros::ok())
     {
-        // 現在のSteerの回転角度を算出
-        TWO.cal_angle();
-        SIX.cal_angle();
-        TEN.cal_angle();
-        // PID制御
-        PWM.SteerTwo = -TWO.PID();
-        PWM.SteerSix = -SIX.PID();
-        PWM.SteerTen = -TEN.PID();
-        if(state % 2 == 1){
-            PWM.SteerTwo = 0;
-            PWM.SteerSix = 0;
-            PWM.SteerTen = 0;
-        }
-        str_ard_pub.publish(PWM);
-        dbg_pub.publish(param);
+        StrPwm.SteerTwo = -StrTwo.PID();
+        StrPwm.SteerSix = -StrSix.PID();
+        StrPwm.SteerTen = -StrTen.PID();
+        DrvPwm.DriveTwo = DrvTwo.PID();
+        DrvPwm.DriveSix = DrvSix.PID();
+        DrvPwm.DriveTen = DrvTen.PID();
+        LimitPwm();
+        //ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+        //ROS_INFO("%lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
+        //ROS_INFO("%d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
+        str_ard_pub.publish(StrPwm);
+        drv_ard_pub.publish(DrvPwm);
+        dbg_pub.publish(StrSix.param);
         ros::spinOnce();
         loop_rate.sleep();
     }

@@ -4,16 +4,16 @@
 #include "Arduino.h"
 #define PIN_A_TWO 19 //-> 4
 #define PIN_B_TWO 18 //-> 5
-#define PIN_A_SIX 3 //-> 1
-#define PIN_B_SIX 2 //-> 0
-#define PIN_A_TEN 21 //-> 2
-#define PIN_B_TEN 20 //-> 3
-#define PIN_1A 8
-#define PIN_1B 7
-#define PIN_2A 6
-#define PIN_2B 5
-#define PIN_3A 11
-#define PIN_3B 10
+#define PIN_A_SIX 21 //-> 2
+#define PIN_B_SIX 20 //-> 3
+#define PIN_A_TEN 3 //-> 1
+#define PIN_B_TEN 2 //-> 0
+#define PIN_PWM1 7
+#define PIN_DIR1 8
+#define PIN_PWM2 5
+#define PIN_DIR2 6
+#define PIN_PWM3 10
+#define PIN_DIR3 11
 #define OBJECT_NUM 3 // モータ(エンコーダ)の個数
 #define OBJECT_TWO 0
 #define OBJECT_SIX 1

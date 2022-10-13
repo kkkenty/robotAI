@@ -1,6 +1,6 @@
 #include "motor_control.h"
 
-float SPEED_NOW[OBJECT_NUM] = {0}; 
+float SPEED_NOW[OBJECT_NUM] = {0.0}; 
 long PULSE_NOW[OBJECT_NUM] = {0}; 
 // 割り込み処理(class宣言外)に使われるため，global変数
 volatile long value[OBJECT_NUM] = {0}; // エンコーダの値(割り込みで変化)
