@@ -26,5 +26,8 @@ sudo apt-get install ros-melodic-urg-node
 sudo apt install python-catkin-tools
 
 # Inverse kinematics model of independent 3-wheel steering
-Maybe I'm wrong
+θ is a constant
 ![Inverse kinematics model](Inverse_kinematics_model.jpg)
+
+# joy_controlのrqt_graph
+![joy_control](joy_control.png)
