@@ -11,7 +11,7 @@
 #define OBJECT_TEN 1
 
 msgs::SteerPower StrPwm, DrvPwm;
-int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100, RESOLUTION = 10240, STROFFSET = 10;
+int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100, STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10;
 int state = 0, i;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0, KV = 1.0;
 float RADIUS = 133.414;
@@ -86,15 +86,16 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    StrTwo.Now = (float) Ardmsg.PulseTwo / RESOLUTION * M_PI;
-    StrSix.Now = (float) Ardmsg.PulseSix / RESOLUTION * M_PI;
-    StrTen.Now = (float) Ardmsg.PulseTen / RESOLUTION * M_PI;
+    StrTwo.Now = (float) Ardmsg.PulseTwo / STRRESOLUTION * M_PI;
+    StrSix.Now = (float) Ardmsg.PulseSix / STRRESOLUTION * M_PI;
+    StrTen.Now = (float) Ardmsg.PulseTen / STRRESOLUTION * M_PI;
 }
 void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    DrvTwo.Now = Ardmsg.SpeedTwo / (float)RESOLUTION * 4.0 * M_PI * RADIUS;
-    DrvSix.Now = Ardmsg.SpeedSix / (float)RESOLUTION * 4.0 * M_PI * RADIUS;
-    DrvTen.Now = Ardmsg.SpeedTen / (float)RESOLUTION * 4.0 * M_PI * RADIUS;
+    // ギア比を考慮する必要あり
+    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * RADIUS;
+    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * RADIUS;
+    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * RADIUS;
 }
 void ParamSet(){
     StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
@@ -142,6 +143,8 @@ int main(int argc, char **argv)
     pnh.getParamCached("STROFFSET", STROFFSET);
     pnh.getParamCached("RADIUS", RADIUS);
     pnh.getParamCached("KV", KV);
+    pnh.getParamCached("STRRESOLUTION", STRRESOLUTION);
+    pnh.getParamCached("DRVRESOLUTION", DRVRESOLUTION);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);

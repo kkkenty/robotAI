@@ -29,14 +29,12 @@ ros::Subscriber<msgs::SteerPower> sub("DrvPower", &powerCb);
 
 void setup() {
   nh.getHardware()->setBaud(115200);
-  /*
   attachInterrupt(4, counterTWO, CHANGE);
   attachInterrupt(5, counterTWO, CHANGE);
   attachInterrupt(2, counterSIX, CHANGE);
   attachInterrupt(3, counterSIX, CHANGE);
   attachInterrupt(1, counterTEN, CHANGE);
   attachInterrupt(0, counterTEN, CHANGE);
-  */
   nh.initNode();
   nh.advertise(pub);
   nh.subscribe(sub);
