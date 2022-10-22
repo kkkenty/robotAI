@@ -30,11 +30,11 @@ ros::Subscriber<msgs::SteerPower> sub("DrvPower", &powerCb);
 void setup() {
   nh.getHardware()->setBaud(115200);
   attachInterrupt(4, counterTWO, CHANGE);
-  attachInterrupt(5, counterTWO, CHANGE);
+  //attachInterrupt(5, counterTWO, CHANGE);
   attachInterrupt(2, counterSIX, CHANGE);
-  attachInterrupt(3, counterSIX, CHANGE);
+  //attachInterrupt(3, counterSIX, CHANGE);
   attachInterrupt(1, counterTEN, CHANGE);
-  attachInterrupt(0, counterTEN, CHANGE);
+  //attachInterrupt(0, counterTEN, CHANGE);
   nh.initNode();
   nh.advertise(pub);
   nh.subscribe(sub);
@@ -59,6 +59,14 @@ void loop() {
   Serial.print("  :  ");
   Serial.println(SPEED_NOW[OBJECT_TEN]);
   */
+  
+  Serial.print(value[OBJECT_TWO]); // debug
+  Serial.print("  :  ");
+  Serial.print(value[OBJECT_SIX]);
+  Serial.print("  :  ");
+  Serial.println(value[OBJECT_TEN]);
+  
+  
   // 速度の出力 //
   motorTWO.setSpeed(PWM[OBJECT_TWO]);
   motorSIX.setSpeed(PWM[OBJECT_SIX]);

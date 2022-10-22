@@ -12,21 +12,24 @@
 
   <group if="$(arg controller)">
     <node name="controller2" pkg="joy_control" type="controller2" output="screen" required="true">
-      <param name="RADIUS" value="133.414"/>
-      <param name="STRRESOLUTION" value="10240"/>
-      <param name="DRVRESOLUTION" value="240"/>
+      <param name="DIAMETER" value="64"/>
+      <param name="STRRESOLUTION" value="2560"/>
+      <param name="DRVRESOLUTION" value="384"/>
       <param name="FRIQUENCY" value="100"/>
-      <param name="MAX_Drive_PWM" value="100"/> <!-- 現状はPMW50くらいしか正常に動作しない-->
+      <param name="MAX_Drive_PWM" value="80"/> <!-- 現状はPMW 80くらいしか正常に動作しない-->
       <param name="MAX_Steer_PWM" value="235"/> <!-- 240くらいからオーバーシュートする -->
       <param name="STRKP" value="140"/> <!-- 150以上だと少しオーバーシュートする -->
       <param name="STRKI" value="0.01"/> 
       <param name="STRKD" value="0.0"/>
       <param name="STROFFSET" value="10"/> 
 
-      <param name="DRVKP" value="10"/>
+      <param name="DRVKP" value="20"/>
       <param name="DRVKI" value="0.0"/>
-      <param name="DRVKD" value="0.0"/>
-      <param name="KV" value="100.0"/>
+      <param name="DRVKD" value="0.1"/>
+      <param name="DRVOFFSET" value="0"/> 
+      <param name="KV" value="3.0"/> <!-- 3.0が手動操作でちょうどよい、7.0がmaxだけど転倒するので危ない -->
+      <param name="LIMIT" value="0.25"/>
+      <param name="ACC" value="5"/>
     </node>
   </group>
 

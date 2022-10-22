@@ -11,10 +11,10 @@
 #define OBJECT_TEN 1
 
 msgs::SteerPower StrPwm, DrvPwm;
-int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100, STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10;
-int state = 0, i;
+int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100, STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
+int state = 0, i, ACC = 5;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0, KV = 1.0;
-float RADIUS = 133.414;
+float DIAMETER = 133.414, LIMIT = 1.0;
 
 class feedback{
     private:
@@ -26,6 +26,7 @@ class feedback{
         msgs::PID param;
         int PID();
         int FORWARD();
+        int daikei();
 };
 int feedback::PID(){
     Error = Goal - Now; // P項
@@ -44,6 +45,18 @@ int feedback::PID(){
     ErrorPre = Error;
     Pre = Now;
     return Power;
+}
+int feedback::daikei(){
+  Error = Goal - Now; // P項 or 偏差
+  if(Error > LIMIT){
+    Power += ACC;
+  }
+  else if(Error < -LIMIT){
+    Power -= ACC;
+  }
+  else{ // -LIMIT <= SPEED_ERROR[i] <= LIMIT
+  }
+  return Power;
 }
 int feedback::FORWARD(){
     Power = (int)Goal;
@@ -92,10 +105,9 @@ void StrArdCb(const msgs::SteerSensor &Ardmsg)
 }
 void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    // ギア比を考慮する必要あり
-    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * RADIUS;
-    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * RADIUS;
-    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * RADIUS;
+    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * DIAMETER;
+    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * DIAMETER;
+    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * DIAMETER;
 }
 void ParamSet(){
     StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
@@ -105,6 +117,7 @@ void ParamSet(){
     DrvTwo.ki = DRVKI; DrvSix.ki = DRVKI; DrvTen.ki = DRVKI;
     DrvTwo.kd = DRVKD; DrvSix.kd = DRVKD; DrvTen.kd = DRVKD;
     StrTwo.offset = STROFFSET; StrSix.offset = STROFFSET; StrTen.offset = STROFFSET;
+    DrvTwo.offset = DRVOFFSET; DrvSix.offset = DRVOFFSET; DrvTen.offset = DRVOFFSET;
 }
 void LimitPwm(){
     if(StrPwm.SteerTwo > MAX_Steer_PWM) StrPwm.SteerTwo = MAX_Steer_PWM;
@@ -141,10 +154,13 @@ int main(int argc, char **argv)
     pnh.getParamCached("DRVKI", DRVKI);
     pnh.getParamCached("DRVKD", DRVKD);
     pnh.getParamCached("STROFFSET", STROFFSET);
-    pnh.getParamCached("RADIUS", RADIUS);
+    pnh.getParamCached("DRVOFFSET", DRVOFFSET);
+    pnh.getParamCached("DIAMETER", DIAMETER);
     pnh.getParamCached("KV", KV);
     pnh.getParamCached("STRRESOLUTION", STRRESOLUTION);
     pnh.getParamCached("DRVRESOLUTION", DRVRESOLUTION);
+    pnh.getParamCached("LIMIT", LIMIT);
+    pnh.getParamCached("ACC", ACC);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);
@@ -159,18 +175,20 @@ int main(int argc, char **argv)
         StrPwm.SteerTwo = -StrTwo.PID();
         StrPwm.SteerSix = -StrSix.PID();
         StrPwm.SteerTen = -StrTen.PID();
-        DrvPwm.DriveTwo = -DrvTwo.FORWARD();
-        DrvPwm.DriveSix = -DrvSix.FORWARD();
-        DrvPwm.DriveTen = -DrvTen.FORWARD();
+        DrvPwm.DriveTwo = DrvTwo.PID();
+        DrvPwm.DriveSix = DrvSix.PID();
+        DrvPwm.DriveTen = DrvTen.PID();
         LimitPwm();
         /*
-        ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
-        ROS_INFO("%lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
-        ROS_INFO("%d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);]
+        ROS_INFO("Goal  %lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+        ROS_INFO("Error %lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
+        ROS_INFO("PWM   %d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
         */
-        ROS_INFO("%lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
-        ROS_INFO("%lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
-        ROS_INFO("%d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+        ROS_INFO("Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
+        ROS_INFO("Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
+        ROS_INFO("Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
+        ROS_INFO("PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+        
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
         dbg_pub.publish(DrvSix.param);

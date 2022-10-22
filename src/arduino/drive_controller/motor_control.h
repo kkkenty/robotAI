@@ -20,6 +20,7 @@
 #define OBJECT_TEN 2
 extern float SPEED_NOW[OBJECT_NUM]; // publishに使用
 extern long PULSE_NOW[OBJECT_NUM]; // パルス数
+extern volatile long value[OBJECT_NUM];
 
 class encoder{
   private:
