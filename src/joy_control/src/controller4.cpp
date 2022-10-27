@@ -13,8 +13,6 @@
 #define deg_to_rad(deg) ((deg)/180*M_PI)
 #define rad_to_deg(rad) ((rad)/M_PI*180)
 
-ando
-
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
 int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
@@ -78,9 +76,7 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
     vx = KV * joy_msg.axes[1];
     vy = KV * joy_msg.axes[0];
     vw = KW * joy_msg.axes[3];
-    // 各ステアユニットの目標速度を算出
-    /* vx,vy,vwが全て0のときは角度を維持するようにする(目標角度を更新しない)
-        もしうまく行かない場合は、安藤さんの内積を使う方式で試す */
+    // ステアの目標角度を算出（参考：chjk_node）
     if(!(vx == 0 && vy == 0 && vw == 0)){
         vrw = RADIUS*vw;
         StrTwo.Goal = -atan2(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
