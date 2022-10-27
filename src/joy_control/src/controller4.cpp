@@ -1,4 +1,4 @@
-// joystickを使って、ステアの位置制御を逆運動学を用いて行う
+// joystickを使って、ステアの位置制御を逆運動学を用いて行う (より近い角度にステア角を移動させる)
 // 左スティックで平行移動 / 右スティックの左右で角速度入力(回転移動)
 // まだ実機テスト試していない
 #include <ros/ros.h>
@@ -12,6 +12,8 @@
 #define OBJECT_TEN 1
 #define deg_to_rad(deg) ((deg)/180*M_PI)
 #define rad_to_deg(rad) ((rad)/M_PI*180)
+
+ando
 
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
@@ -90,6 +92,10 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
     DrvTwo.Goal = hypotf(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
     DrvSix.Goal = hypotf(vy-vrw, vx);
     DrvTen.Goal = hypotf(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
+
+    
+
+
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
@@ -135,7 +141,7 @@ void LimitPwm(){
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "controller3");
+    ros::init(argc, argv, "controller4");
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
     pnh.getParamCached("MAX_Drive_PWM", MAX_Drive_PWM);

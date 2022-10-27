@@ -1,5 +1,6 @@
 // joystickを使って、ステアの位置制御、駆動輪の速度制御を行いPWM値を配信する
-// 各モータのデバッグ用
+// 左スティックで方向決定 / 右スティックの前後で駆動輪回転 (10/22) 
+// 現状は、目標速度と実際の速度に誤差あり
 #include <ros/ros.h>
 #include <math.h>
 #include <sensor_msgs/Joy.h>
@@ -11,7 +12,8 @@
 #define OBJECT_TEN 1
 
 msgs::SteerPower StrPwm, DrvPwm;
-int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100, STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
+int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100;
+int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
 int state = 0, i, ACC = 5;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0, KV = 1.0;
 float DIAMETER = 133.414, LIMIT = 1.0;
@@ -191,7 +193,7 @@ int main(int argc, char **argv)
         
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
-        dbg_pub.publish(DrvSix.param);
+        //dbg_pub.publish(DrvSix.param);
         ros::spinOnce();
         loop_rate.sleep();
     }

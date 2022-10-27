@@ -1,7 +1,8 @@
 <launch>
   <arg name="joystick" 		default="true"/>
   <arg name="controller" 	default="true"/>
-  <arg name="arduino" 		default="true"/>
+  <arg name="StrArduino" 		default="true"/>
+  <arg name="DrvArduino" 		default="true"/>
 
   <group if="$(arg joystick)">
     <node name="joystick" pkg="joy" type="joy_node" required="true">
@@ -11,26 +12,43 @@
 
   <group if="$(arg controller)">
     <node name="controller3" pkg="joy_control" type="controller3" output="screen" required="true">
-      <param name="MAX_Drive_PWM" value="255"/>
+      <!-- fixed parameter -->
+      <param name="DIAMETER" value="64"/>
+      <param name="RADIUS" value="133.414"/>
+      <param name="STRRESOLUTION" value="2560"/>
+      <param name="DRVRESOLUTION" value="384"/>
+      <!-- Steer Parameter -->
       <param name="MAX_Steer_PWM" value="235"/> <!-- 240くらいからオーバーシュートする -->
-      <param name="FRIQUENCY" value="100"/>
-      <param name="STRKP" value="140"/> <!-- 150以上だと少しオーバーシュートする -->>
+      <param name="STRKP" value="140"/> <!-- 150以上だと少しオーバーシュートする -->
       <param name="STRKI" value="0.01"/> 
       <param name="STRKD" value="0.0"/>
-      <param name="DRVKP" value="200"/>
-      <param name="DRVKI" value="0.25"/>
-      <param name="DRVKD" value="0.5"/>
       <param name="STROFFSET" value="10"/> 
-      <param name="RADIUS" value="0.133414"/>
-      <param name="KV" value="1.0"/>
-      <param name="KW" value="5.0"/>
+      <!-- Drive Parameter -->
+      <param name="MAX_Drive_PWM" value="80"/> <!-- 現状はPMW 80くらいしか正常に動作しない-->
+      <param name="DRVKP" value="20"/>
+      <param name="DRVKI" value="0.0"/>
+      <param name="DRVKD" value="0.1"/>
+      <param name="DRVOFFSET" value="0"/> 
+      <!-- others -->
+      <param name="FRIQUENCY" value="100"/>
+      <param name="LIMIT" value="0.25"/>
+      <param name="ACC" value="5"/>
+      <param name="KV" value="3.0"/> <!-- 3.0が手動操作でちょうどよい、7.0がmaxだけど転倒するので危ない -->
+      <param name="KW" value="6.0"/>
     </node>
   </group>
 
-  <group if="$(arg arduino)">
-    <node pkg="rosserial_python" type="serial_node.py" name="arduino" required="true">
+  <group if="$(arg StrArduino)">
+    <node pkg="rosserial_python" type="serial_node.py" name="StrArduino" required="true">
       <param name="port" value="/dev/ttyACM0"/>
       <param name="baud" value="57600"/>
+    </node>
+  </group>
+
+  <group if="$(arg DrvArduino)">
+    <node pkg="rosserial_python" type="serial_node.py" name="DrvArduino" required="true">
+      <param name="port" value="/dev/ttyACM1"/>
+      <param name="baud" value="115200"/>
     </node>
   </group>
 </launch>
