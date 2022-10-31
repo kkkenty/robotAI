@@ -16,7 +16,7 @@
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
 int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
-int state = 0, i, ACC = 5;
+int state = 0, i, ACC = 5, DRVFRIQ = 40;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0;
 float RADIUS = 133.414, KV = 5.0, KW = 10.0, DIAMETER = 133.414, LIMIT = 1.0;
 float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
@@ -79,12 +79,12 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
     // 各ステアユニットの目標速度を算出
     /* vx,vy,vwが全て0のときは角度を維持するようにする(目標角度を更新しない)
         もしうまく行かない場合は、安藤さんの内積を使う方式で試す */
+    vrw = RADIUS*vw;
     if(!(vx == 0 && vy == 0 && vw == 0)){
-        vrw = RADIUS*vw;
         StrTwo.Goal = -atan2(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
         StrSix.Goal = -atan2(vy-vrw, vx);
         StrTen.Goal = -atan2(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
-        ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+        // ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
     }
     // 駆動輪の目標速度の算出(ユークリッド距離)
     DrvTwo.Goal = hypotf(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
@@ -99,9 +99,9 @@ void StrArdCb(const msgs::SteerSensor &Ardmsg)
 }
 void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    DrvTwo.Now = Ardmsg.SpeedTwo / (float)STRRESOLUTION * M_PI * DIAMETER;
-    DrvSix.Now = Ardmsg.SpeedSix / (float)STRRESOLUTION * M_PI * DIAMETER;
-    DrvTen.Now = Ardmsg.SpeedTen / (float)STRRESOLUTION * M_PI * DIAMETER;
+    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
+    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
+    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
 }
 void ParamSet(){
     StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
@@ -157,6 +157,7 @@ int main(int argc, char **argv)
     pnh.getParamCached("RADIUS", RADIUS);
     pnh.getParamCached("KV", KV);
     pnh.getParamCached("KW", KW);
+    pnh.getParamCached("DRVFRIQ", DRVFRIQ);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);
@@ -180,6 +181,11 @@ int main(int argc, char **argv)
         ROS_INFO("%lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
         ROS_INFO("%d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
         */
+        ROS_INFO("Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
+        ROS_INFO("Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
+        ROS_INFO("Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
+        ROS_INFO("PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
         //dbg_pub.publish(StrSix.param);

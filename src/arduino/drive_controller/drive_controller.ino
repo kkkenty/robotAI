@@ -59,13 +59,13 @@ void loop() {
   Serial.print("  :  ");
   Serial.println(SPEED_NOW[OBJECT_TEN]);
   */
-  
+  /*
   Serial.print(value[OBJECT_TWO]); // debug
   Serial.print("  :  ");
   Serial.print(value[OBJECT_SIX]);
   Serial.print("  :  ");
   Serial.println(value[OBJECT_TEN]);
-  
+  */
   
   // 速度の出力 //
   motorTWO.setSpeed(PWM[OBJECT_TWO]);

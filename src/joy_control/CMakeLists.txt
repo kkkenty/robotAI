@@ -137,6 +137,7 @@ include_directories(
 ## add_executable(controller src/controller.cpp)
 add_executable(controller2 src/controller2.cpp)
 add_executable(controller3 src/controller3.cpp)
+add_executable(controller4 src/controller4.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -149,6 +150,7 @@ add_executable(controller3 src/controller3.cpp)
 ## add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(controller2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(controller3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(controller4 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 ##target_link_libraries(controller
@@ -158,6 +160,9 @@ target_link_libraries(controller2
   ${catkin_LIBRARIES}
 )
 target_link_libraries(controller3
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(controller4
   ${catkin_LIBRARIES}
 )
 

@@ -16,7 +16,7 @@
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
 int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
-int state = 0, i, ACC = 5;
+int state = 0, i, ACC = 5, DRVFRIQ = 40;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0;
 float RADIUS = 133.414, KV = 5.0, KW = 10.0, DIAMETER = 133.414, LIMIT = 1.0;
 float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
@@ -29,10 +29,14 @@ class feedback{
     public:
         int GetPulse = 0, offset = 0;
         float Now = 0.0, Goal = 0.0, Error = 0.0, kp = 0.0, ki = 0.0, kd = 0.0;
+        float gx = 0.0, gy = 0.0, nx = 0.0, ny = 0.0;
         msgs::PID param;
         int PID();
         int FORWARD();
         int daikei();
+        int calc_dir();
+        float calc_deg();
+        int calc_vel();
 };
 int feedback::PID(){
     Error = Goal - Now; // P項
@@ -61,6 +65,29 @@ int feedback::FORWARD(){
     else if(Power < 0) Power -= offset;
     return Power;
 }
+int feedback::calc_dir(){
+    if((nx*gy - gx*ny) >= 0) return 1; // 外積のz成分で回転方向を判明する
+    else return -1;
+}
+float feedback::calc_deg(){
+    if(abs(hypotf(gx,gy)*hypotf(nx,ny)) > 1e-5){ // 0で除算させない工夫
+        float cos_theta = ( (gx*nx)+(gy*ny) ) / ( hypotf(gx,gy)*hypotf(nx,ny) );
+        if(cos_theta >= 0 && cos_theta <= 1){ // 角度偏差が -90 ~ 90 deg
+            return (Now + (float)calc_dir() * acos(cos_theta)); // 角度偏差を加える（角度の正負を考慮）
+        }
+        else if(cos_theta < 0 && cos_theta >= -1){ // 角度偏差が-180 ~ -90 もしくは 90 ~ 180 deg
+            return (Now - (float)calc_dir() * (M_PI - acos(cos_theta))); // 角度を逆方向に加える
+        }
+    }
+}
+int feedback::calc_vel(){
+    if(hypotf(gx,gy)*hypotf(nx,ny) != 0){ // 角速度がともに0でない場合
+        float cos_theta = (gx*nx)+(gy*ny);
+        if(cos_theta < 0) return -1; // 回転角度が -90 ~ 90 degをはみ出す場合
+        else return 1; // 速度を反転させる
+    }
+    else return 1;
+}
 
 feedback StrTwo, StrSix, StrTen, DrvTwo, DrvSix, DrvTen;
 
@@ -77,33 +104,41 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
     vy = KV * joy_msg.axes[0];
     vw = KW * joy_msg.axes[3];
     // ステアの目標角度を算出（参考：chjk_node）
+    vrw = RADIUS*vw;
     if(!(vx == 0 && vy == 0 && vw == 0)){
-        vrw = RADIUS*vw;
-        StrTwo.Goal = -atan2(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
-        StrSix.Goal = -atan2(vy-vrw, vx);
-        StrTen.Goal = -atan2(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
-        ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+        StrTwo.gx = vx+ROOT3/2.0*vrw; 
+        StrTwo.gy = vy+vrw/2.0;
+        StrTwo.Goal = -StrTwo.calc_deg();
+        StrSix.gx = vx; 
+        StrSix.gy = vy-vrw;
+        StrSix.Goal = -StrSix.calc_deg();
+        StrTen.gx = vx-ROOT3/2.0*vrw; 
+        StrTen.gy = vy+vrw/2.0;
+        StrTen.Goal = -StrTen.calc_deg();
+        //ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
     }
     // 駆動輪の目標速度の算出(ユークリッド距離)
-    DrvTwo.Goal = hypotf(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
-    DrvSix.Goal = hypotf(vy-vrw, vx);
-    DrvTen.Goal = hypotf(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
-
-    
-
-
+    DrvTwo.Goal = (float)StrTwo.calc_vel() * hypotf(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
+    DrvSix.Goal = (float)StrSix.calc_vel() * hypotf(vy-vrw, vx);
+    DrvTen.Goal = (float)StrTen.calc_vel() * hypotf(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
     StrTwo.Now = (float) Ardmsg.PulseTwo / STRRESOLUTION * M_PI;
+    StrTwo.nx = cos(StrTwo.Now); 
+    StrTwo.ny = sin(StrTwo.Now);
     StrSix.Now = (float) Ardmsg.PulseSix / STRRESOLUTION * M_PI;
+    StrSix.nx = cos(StrSix.Now); 
+    StrSix.ny = sin(StrSix.Now);
     StrTen.Now = (float) Ardmsg.PulseTen / STRRESOLUTION * M_PI;
+    StrTen.nx = cos(StrTen.Now); 
+    StrTen.ny = sin(StrTen.Now);
 }
 void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    DrvTwo.Now = Ardmsg.SpeedTwo / (float)STRRESOLUTION * M_PI * DIAMETER;
-    DrvSix.Now = Ardmsg.SpeedSix / (float)STRRESOLUTION * M_PI * DIAMETER;
-    DrvTen.Now = Ardmsg.SpeedTen / (float)STRRESOLUTION * M_PI * DIAMETER;
+    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
+    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
+    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
 }
 void ParamSet(){
     StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
@@ -159,6 +194,7 @@ int main(int argc, char **argv)
     pnh.getParamCached("RADIUS", RADIUS);
     pnh.getParamCached("KV", KV);
     pnh.getParamCached("KW", KW);
+    pnh.getParamCached("DRVFRIQ", DRVFRIQ);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);
@@ -177,10 +213,15 @@ int main(int argc, char **argv)
         DrvPwm.DriveSix = DrvSix.PID();
         DrvPwm.DriveTen = DrvTen.PID();
         LimitPwm();
-        /*
+        
         ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
         ROS_INFO("%lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
         ROS_INFO("%d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
+        /*
+        ROS_INFO("Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
+        ROS_INFO("Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
+        ROS_INFO("Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
+        ROS_INFO("PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
         */
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
