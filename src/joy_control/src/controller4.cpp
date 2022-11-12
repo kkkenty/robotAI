@@ -108,14 +108,24 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
     if(!(vx == 0 && vy == 0 && vw == 0)){
         StrTwo.gx = vx+ROOT3/2.0*vrw; 
         StrTwo.gy = vy+vrw/2.0;
-        StrTwo.Goal = -StrTwo.calc_deg();
+        StrTwo.Goal = StrTwo.calc_deg();
         StrSix.gx = vx; 
         StrSix.gy = vy-vrw;
-        StrSix.Goal = -StrSix.calc_deg();
+        StrSix.Goal = StrSix.calc_deg();
+        /*
+        ROS_INFO("joy %lf", atan2(vy,vx)/M_PI*180.0);
+        ROS_INFO("Goal %lf", StrSix.Goal/M_PI*180.0);
+        ROS_INFO("Now %lf\n", StrSix.Now/M_PI*180.0);
+        */
         StrTen.gx = vx-ROOT3/2.0*vrw; 
         StrTen.gy = vy+vrw/2.0;
-        StrTen.Goal = -StrTen.calc_deg();
+        StrTen.Goal = StrTen.calc_deg();
         //ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+    }
+    if(joy_msg.buttons[4] && joy_msg.buttons[5]){
+        StrTwo.Goal = 0.0;
+        StrSix.Goal = 0.0;
+        StrTen.Goal = 0.0;
     }
     // 駆動輪の目標速度の算出(ユークリッド距離)
     DrvTwo.Goal = (float)StrTwo.calc_vel() * hypotf(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
@@ -124,13 +134,13 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    StrTwo.Now = (float) Ardmsg.PulseTwo / STRRESOLUTION * M_PI;
+    StrTwo.Now = -(float) Ardmsg.PulseTwo / STRRESOLUTION * M_PI;
     StrTwo.nx = cos(StrTwo.Now); 
     StrTwo.ny = sin(StrTwo.Now);
-    StrSix.Now = (float) Ardmsg.PulseSix / STRRESOLUTION * M_PI;
+    StrSix.Now = -(float) Ardmsg.PulseSix / STRRESOLUTION * M_PI;
     StrSix.nx = cos(StrSix.Now); 
     StrSix.ny = sin(StrSix.Now);
-    StrTen.Now = (float) Ardmsg.PulseTen / STRRESOLUTION * M_PI;
+    StrTen.Now = -(float) Ardmsg.PulseTen / STRRESOLUTION * M_PI;
     StrTen.nx = cos(StrTen.Now); 
     StrTen.ny = sin(StrTen.Now);
 }
@@ -206,17 +216,18 @@ int main(int argc, char **argv)
 
     while (ros::ok())
     {
-        StrPwm.SteerTwo = -StrTwo.PID();
-        StrPwm.SteerSix = -StrSix.PID();
-        StrPwm.SteerTen = -StrTen.PID();
+        StrPwm.SteerTwo = StrTwo.PID();
+        StrPwm.SteerSix = StrSix.PID();
+        StrPwm.SteerTen = StrTen.PID();
         DrvPwm.DriveTwo = DrvTwo.PID();
         DrvPwm.DriveSix = DrvSix.PID();
         DrvPwm.DriveTen = DrvTen.PID();
         LimitPwm();
         
-        ROS_INFO("%lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
-        ROS_INFO("%lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
-        ROS_INFO("%d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
+        ROS_INFO("Str.Goal %lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
+        ROS_INFO("Str.Now %lf, %lf, %lf", StrTwo.Now / M_PI * 180.0, StrSix.Now / M_PI * 180.0, StrTen.Now / M_PI * 180.0);
+        ROS_INFO("Str.Error %lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
+        ROS_INFO("Str.Pwm %d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
         /*
         ROS_INFO("Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
         ROS_INFO("Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);

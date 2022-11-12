@@ -19,7 +19,6 @@
       <param name="DRVRESOLUTION" value="384"/> <!-- gear : 15 to 24, 240 PPR -->
       <!-- Steer Parameter -->
       <param name="MAX_Steer_PWM" value="235"/> <!-- 240くらいからオーバーシュートする -->
-      <!-- PIDパラメータ調整？ -->
       <param name="STRKP" value="140"/> <!-- 150以上だと少しオーバーシュートする default=140-->
       <param name="STRKI" value="0.01"/> 
       <param name="STRKD" value="0.0"/>
