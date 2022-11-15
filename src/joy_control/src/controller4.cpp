@@ -228,12 +228,12 @@ int main(int argc, char **argv)
         ROS_INFO("Str.Now %lf, %lf, %lf", StrTwo.Now / M_PI * 180.0, StrSix.Now / M_PI * 180.0, StrTen.Now / M_PI * 180.0);
         ROS_INFO("Str.Error %lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
         ROS_INFO("Str.Pwm %d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
-        /*
-        ROS_INFO("Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
-        ROS_INFO("Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
-        ROS_INFO("Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
-        ROS_INFO("PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
-        */
+        
+        ROS_INFO("Drv.Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
+        ROS_INFO("Drv.Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
+        ROS_INFO("Drv.Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
+        ROS_INFO("Drv.PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+        
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
         //dbg_pub.publish(StrSix.param);
