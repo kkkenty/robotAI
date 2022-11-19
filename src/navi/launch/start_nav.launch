@@ -1,0 +1,93 @@
+<launch>
+  <!-- Arguments -->
+  <arg name="map_file"	  	default="$(find create_map)/map/test2.yaml"/>
+  <arg name="joystick" 	  	default="true"/>
+  <arg name="controller"  	default="true"/>
+  <arg name="arduino" 	  	default="true"/>
+  <arg name="urg"		        default="true"/>
+  <arg name="odometry"		  default="true"/>
+  <arg name="map_server"	  default="true"/>
+  <arg name="amcl"	      	default="true"/>
+  <arg name="rviz"		      default="false"/>
+  <arg name="pure_pursuit"	default="true"/>
+
+  <arg name="move_base"		default="false"/>
+  <arg name="move_forward_only" default="false"/>
+  <arg name="make_goal"		default="false"/>
+
+  <group if="$(arg joystick)">
+    <node name="joystick" pkg="joy" type="joy_node" required="true">
+      <param name="dev" value="/dev/input/js0"/>
+    </node>
+  </group>
+
+  <group if="$(arg controller)">
+    <node name="controller" pkg="navi" type="controllerLED" output="screen" required="true">
+      <param name="kv" value="0.45"/> <!-- value="0.45" -->
+      <param name="kw" value="1.50"/> <!-- value="1.50" -->
+      <param name="d"  value="0.125"/>
+      <param name="kp" value="130.0"/>
+      <param name="ki" value="4.0"/>
+      <param name="kd"  value="-0.5"/>
+      <param name="LIMIT" value="0.05"/>
+      <param name="ACC" value="1.0"/>
+      <param name="FRIQUENCE" value="100"/>
+    </node>
+  </group>
+
+  <group if="$(arg arduino)">
+    <node pkg="rosserial_python" type="serial_node.py" name="arduino" required="true">
+      <param name="port" value="/dev/ttyACM0"/>
+      <param name="baud" value="57600"/>
+    </node>
+  </group>
+  
+  <group if="$(arg urg)">
+    <node pkg="urg_node" name="urg_node" type="urg_node" required="true">
+      <param name="frame_id" value="base_laser"/>
+      <param name="serial_port" value="/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00"/>
+      <param name="angle_max" value="1.3"/>
+      <param name="angle_min" value="-1.3"/>
+    </node>
+  </group>
+  
+  <group if="$(arg odometry)">
+    <node pkg="navi" name="odometry" type="odometryLED" output="screen" required="true">
+      <param name="d"  value="0.125"/>
+      <param name="FRIQUENCE" value="100"/>
+    </node>
+  </group>
+
+  <group if="$(arg map_server)">
+    <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+  </group>
+
+  <group if="$(arg amcl)">
+    <include file="$(find navi)/launch/amcl.launch"/>
+  </group>
+
+  <group if="$(arg move_base)">
+    <include file="$(find navi)/launch/move_base.launch">
+      <arg name="move_forward_only" value="$(arg move_forward_only)"/>
+    </include>
+  </group>
+
+  <group if="$(arg make_goal)">
+    <node pkg="navi" type="make_goal" name="make_goal" required="true"/>
+  </group>
+
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" required="true"
+          args="-d $(find navi)/rviz/robot03_navi.rviz"/>
+  </group>
+  
+  <group if="$(arg pure_pursuit)">
+    <node pkg="navi" type="pure_pursuit_LED" name="pure_pursuit" output="screen" required="true">
+      <param name="FRIQUENCE" value="20"/>
+      <param name="den" value="200"/>
+      <param name="ahed" value="15"/>
+      <param name="vel" value="0.45"/>
+    </node>
+  </group>
+
+</launch>
