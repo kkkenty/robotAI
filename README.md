@@ -25,11 +25,21 @@ sudo apt-get install ros-melodic-urg-node
 ## catkin buildのインストール
 sudo apt install python-catkin-tools
 
+## USBシリアル接続時に自動で書込権限を付与する  
+sudo vi /lib/udev/rules.d/50-udev-default.rules  
+（WAS）  
+KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP="dialout"  
+（IS）  
+KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP="dialout", MODE="0777"  # or 0666
+
 # Inverse kinematics model of independent 3-wheel steering
 θ is a constant
 ![Inverse kinematics model](Inverse_kinematics_model.jpg)
 
-# joy_controlのrqt_graph
+# 手動操縦  
+ステアを並進、回転移動させる（無限回転）  
+「5」「6」同時押しでステア角を0に設定する  
+roslaunch joy_control control4.launch  
 ![joy_control](joy_control.png)
 
 # memo
@@ -42,3 +52,8 @@ sudo apt install python-catkin-tools
 その他：7.0は速すぎるので，3.0が良い  
 
 ステア角の初期位置は、ハンドリング方向に対して左側に駆動輪ギアが位置する配置にする  
+
+(11/19)
+問題：USBを差し込むたびにArduinoにプログラム書き換える必要がある（なぜ...）  
+原因：仮想マシン上で選択したポート順番とポート番号が間違っていた  
+解決策：ポートを1つ挿して仮想マシンでポートを選択してから、新たなポートを加える  
