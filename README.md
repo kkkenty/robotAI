@@ -38,7 +38,7 @@ KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP=
 
 # Forward kinematics model
 Using pseudo-inverse matrix  
-![forward kinematics model](forward_kinematics_model.jpeg)
+![forward kinematics model](forward_kinematics_model.jpg)
 
 # 手動操縦  
 ステアを並進、回転移動させる（無限回転）  
