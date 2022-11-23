@@ -193,27 +193,26 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "controller5");
     ros::NodeHandle nh;
-    ros::NodeHandle pnh("~");
-    pnh.getParamCached("MAX_Drive_PWM", MAX_Drive_PWM);
-    pnh.getParamCached("MAX_Steer_PWM", MAX_Steer_PWM);
-    pnh.getParamCached("FRIQUENCY", FRIQUENCY);
-    pnh.getParamCached("STRKP", STRKP);
-    pnh.getParamCached("STRKI", STRKI);
-    pnh.getParamCached("STRKD", STRKD);
-    pnh.getParamCached("STROFFSET", STROFFSET);
-    pnh.getParamCached("DRVKP", DRVKP);
-    pnh.getParamCached("DRVKI", DRVKI);
-    pnh.getParamCached("DRVKD", DRVKD);
-    pnh.getParamCached("DRVOFFSET", DRVOFFSET);
-    pnh.getParamCached("DIAMETER", DIAMETER);
-    pnh.getParamCached("STRRESOLUTION", STRRESOLUTION);
-    pnh.getParamCached("DRVRESOLUTION", DRVRESOLUTION);
-    pnh.getParamCached("LIMIT", LIMIT);
-    pnh.getParamCached("ACC", ACC);
-    pnh.getParamCached("RADIUS", RADIUS);
-    pnh.getParamCached("KV", KV);
-    pnh.getParamCached("KW", KW);
-    pnh.getParamCached("DRVFRIQ", DRVFRIQ);
+    nh.getParamCached("controller/MAX_Drive_PWM", MAX_Drive_PWM);
+    nh.getParamCached("controller/MAX_Steer_PWM", MAX_Steer_PWM);
+    nh.getParamCached("controller/FRIQUENCY", FRIQUENCY);
+    nh.getParamCached("controller/STRKP", STRKP);
+    nh.getParamCached("controller/STRKI", STRKI);
+    nh.getParamCached("controller/STRKD", STRKD);
+    nh.getParamCached("controller/STROFFSET", STROFFSET);
+    nh.getParamCached("controller/DRVKP", DRVKP);
+    nh.getParamCached("controller/DRVKI", DRVKI);
+    nh.getParamCached("controller/DRVKD", DRVKD);
+    nh.getParamCached("controller/DRVOFFSET", DRVOFFSET);
+    nh.getParamCached("controller/DIAMETER", DIAMETER);
+    nh.getParamCached("controller/STRRESOLUTION", STRRESOLUTION);
+    nh.getParamCached("controller/DRVRESOLUTION", DRVRESOLUTION);
+    nh.getParamCached("controller/LIMIT", LIMIT);
+    nh.getParamCached("controller/ACC", ACC);
+    nh.getParamCached("controller/RADIUS", RADIUS);
+    nh.getParamCached("controller/KV", KV);
+    nh.getParamCached("controller/KW", KW);
+    nh.getParamCached("controller/DRVFRIQ", DRVFRIQ);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber nav_sub = nh.subscribe("cmd_vel", 10, navCb);
@@ -234,6 +233,7 @@ int main(int argc, char **argv)
         // 緊急停止
         LimitPwm();
         // 情報の出力
+        /*
         ROS_INFO("Str.Goal %lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
         ROS_INFO("Str.Now %lf, %lf, %lf", StrTwo.Now / M_PI * 180.0, StrSix.Now / M_PI * 180.0, StrTen.Now / M_PI * 180.0);
         ROS_INFO("Str.Error %lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
@@ -242,6 +242,7 @@ int main(int argc, char **argv)
         ROS_INFO("Drv.Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
         ROS_INFO("Drv.Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
         ROS_INFO("Drv.PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+        */
         // publish
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);

@@ -1,6 +1,6 @@
 // joystickを使って、ステアの位置制御を逆運動学を用いて行う (より近い角度にステア角を移動させる)
 // 左スティックで平行移動 / 右スティックの左右で角速度入力(回転移動)
-// まだ実機テスト試していない
+// yamlファイル化を行う！！
 #include <ros/ros.h>
 #include <math.h>
 #include <sensor_msgs/Joy.h>

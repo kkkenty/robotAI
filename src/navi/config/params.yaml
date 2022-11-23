@@ -1,0 +1,29 @@
+controller:
+  # fixed parameter 今後はsrcファイルに記載する
+  DIAMETER: 0.064
+  RADIUS: 0.133414
+  STRRESOLUTION: 2560
+  DRVRESOLUTION: 384 # gear : 15 to 24, 240 PPR
+  # Steer Paramete
+  MAX_Steer_PWM: 235 # 240くらいからオーバーシュートする
+  STRKP: 140 # 150以上だと少しオーバーシュートする default=140
+  STRKI: 0.01
+  STRKD: 0.0
+  STROFFSET: 10
+  # Drive Parameter
+  MAX_Drive_PWM: 80 # 現状はPMW 80くらいしか正常に動作しない
+  DRVKP: 200
+  DRVKI: 0.0
+  DRVKD: 0.1
+  DRVOFFSET: 0
+  DRVFRIQ: 40
+  # others
+  FRIQUENCY: 10
+  LIMIT: 0.25
+  ACC: 5
+  KV: 0.2 # 7.0がmaxだけど転倒するので危ない
+  KW: 0.5
+
+odometry: 
+  FRIQUENCY: 100
+  DRVFRIQ: 40
