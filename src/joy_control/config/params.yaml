@@ -1,5 +1,5 @@
 controller:
-  # fixed parameter 今後はsrcファイルに記載する
+  # fixed parameter
   DIAMETER: 0.064
   RADIUS: 0.133414
   STRRESOLUTION: 2560

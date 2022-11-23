@@ -27,14 +27,18 @@ sudo apt install python-catkin-tools
 
 ## USBシリアル接続時に自動で書込権限を付与する  
 sudo vi /lib/udev/rules.d/50-udev-default.rules  
-（WAS）  
+(Before)  
 KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP="dialout"  
-（IS）  
+(After)  
 KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP="dialout", MODE="0777"  # or 0666
 
 # Inverse kinematics model of independent 3-wheel steering
 θ is a constant
 ![Inverse kinematics model](Inverse_kinematics_model.jpg)
+
+# Forward kinematics model
+Using pseudo-inverse matrix  
+![forward kinematics model](forward_kinematics_model.jpeg)
 
 # 手動操縦  
 ステアを並進、回転移動させる（無限回転）  
@@ -59,6 +63,5 @@ roslaunch joy_control control4.launch
 解決策：ポートを1つ挿して仮想マシンでポートを選択してから、新たなポートを加える  
 
 (11/23)  
-やること
+やること  
 ・joy_controlで各ユニットに対してPIDパラメータ調整  
-・yamlファイルで固定パラメータを消す  

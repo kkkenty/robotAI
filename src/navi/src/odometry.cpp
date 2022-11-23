@@ -86,37 +86,19 @@ void tf_odom::get_odom()
     A[2][0] = -3.0*Q-9.0*r*s[1];      A[2][1] = -3.0*P+9.0*r*c[1];      A[2][2] = -3.0*Q+9.0*r*s[0];      A[2][3] = -3.0*P-9.0*r*c[0];      A[2][4] = -3.0*Q+9.0*r*s[2];      A[2][5] = -3.0*P-9.0*r*c[2];
     for(i=0;i<3;i++){
         for(j=0;j<6;j++){
-        A[i][j] /= nolA;
+            A[i][j] /= nolA;
         }
     } 
-    if(Now.SpeedTwo < 0){
-        b[0] = fabs(Now.SpeedTwo)*cos(M_PI-yaw-Now.AngleTwo);
-        b[1] = fabs(Now.SpeedTwo)*sin(M_PI-yaw-Now.AngleTwo);
-    }
-    else{
-        b[0] = Now.SpeedTwo*cos(yaw+Now.AngleTwo);
-        b[1] = Now.SpeedTwo*sin(yaw+Now.AngleTwo);
-    }
-    if(Now.SpeedSix < 0){
-        b[2] = fabs(Now.SpeedSix)*cos(M_PI-yaw-Now.AngleSix);
-        b[3] = fabs(Now.SpeedSix)*sin(M_PI-yaw-Now.AngleSix);
-    }
-    else{
-        b[2] = Now.SpeedSix*cos(yaw+Now.AngleSix);
-        b[3] = Now.SpeedSix*sin(yaw+Now.AngleSix);
-    }
-    if(Now.SpeedTen < 0){
-        b[4] = fabs(Now.SpeedTen)*cos(M_PI-yaw-Now.AngleTen);
-        b[5] = fabs(Now.SpeedTen)*sin(M_PI-yaw-Now.AngleTen);
-    }
-    else{
-        b[4] = Now.SpeedTen*cos(yaw+Now.AngleTen);
-        b[5] = Now.SpeedTen*sin(yaw+Now.AngleTen);
-    }
+    b[0] = Now.SpeedTwo*cos(yaw+Now.AngleTwo);
+    b[1] = Now.SpeedTwo*sin(yaw+Now.AngleTwo);
+    b[2] = Now.SpeedSix*cos(yaw+Now.AngleSix);
+    b[3] = Now.SpeedSix*sin(yaw+Now.AngleSix);
+    b[4] = Now.SpeedTen*cos(yaw+Now.AngleTen);
+    b[5] = Now.SpeedTen*sin(yaw+Now.AngleTen);
     for(i=0;i<3;i++){
         vel[i] = 0.0;
         for(j=0;j<6;j++){
-        vel[i] += A[i][j]*b[j]; // vel = A*b
+            vel[i] += A[i][j]*b[j]; // vel = A*b
         }
     }
     vx = vel[0];
