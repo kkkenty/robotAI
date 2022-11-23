@@ -85,8 +85,8 @@ float feedback::calc_deg(){
 int feedback::calc_vel(){
     if(hypotf(gx,gy)*hypotf(nx,ny) != 0){ // 角速度がともに0でない場合
         float cos_theta = (gx*nx)+(gy*ny);
-        if(cos_theta < 0) return -1; // 回転角度が -90 ~ 90 degをはみ出す場合
-        else return 1; // 速度を反転させる
+        if(cos_theta < 0) return -1; // 回転角度が -90 ~ 90 degをはみ出す場合、速度を反転させる
+        else return 1; 
     }
     else return 1;
 }

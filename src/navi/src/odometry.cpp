@@ -43,26 +43,54 @@ void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 class tf_odom
 {
   private:
-    double x = 0.0, y = 0.0, yaw = 0.0, dt = 0.0, V = 0.0, W = 0.0;
+    double x = 0.0, y = 0.0, yaw = 0.0, dt = 0.0, vx = 0.0, vy = 0.0, vw = 0.0;
+    double P = 0.0, Q = 0.0, PP = 0.0, QQ = 0.0, PQ = 0.0;
+    double A[3][6], b[6], vel[3];
+    int i,j;
     tf::TransformBroadcaster br;
     tf::Transform tf_base, tf_laser;
     tf::Quaternion q_base, q_laser;
     ros::Time ros_pre = ros::Time::now();
   public:
+    tf_odom();
     void get_odom(); // odom情報を計算、配信
 };
+tf_odom::tf_odom(){
+  for(i=0;i<6;i++){
+    for(j=0;j<3;j++){
+      A[j][i] = 0.0;
+      vel[j] = 0.0;
+    }
+    b[i] = 0.0;
+  }
+}
 void tf_odom::get_odom()
-{  
+{
   ros::Time ros_now = ros::Time::now();
   dt = ros_now.toSec() - ros_pre.toSec();
   //ROS_INFO("ROS::Time: %lf", dt);
-  // 運動学
+  // 独立3輪ステア 運動学
+  P = ;
+  Q = ;
+  PP = ;
+  PQ = ;
+  QQ = ;
+  A[][] = ;
+  if(Now.SppedTen < )
+  b[][] = ;
+  for(){
+    x[]=A[][]*b[];
+  }
+  vx = x[];
+
+  /*
   V = (vel.left + vel.right) / 2.0;
   W = (vel.right - vel.left) / 2.0 / d;
   x += V * dt * cos(yaw);
   y += V * dt * sin(yaw);
   yaw += W * dt;
   //ROS_INFO("x:%lf, y:%lf, yaw:%lf", x, y, yaw);
+  */
   
   // tf message
   tf_base.setOrigin(tf::Vector3(x, y, 0.0));
