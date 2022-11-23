@@ -22,6 +22,3 @@ controller:
   ACC: 5
   KV: 0.2 # 7.0がmaxだけど転倒するので危ない
   KW: 0.5
-
-odometry: 
-  FRIQUENCY: 100

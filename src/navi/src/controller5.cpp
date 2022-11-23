@@ -18,7 +18,7 @@
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
 int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
-int state = 0, i, ACC = 5, DRVFRIQ = 40;
+int state = 0, i, ACC = 5;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0;
 float RADIUS = 133.414, KV = 5.0, KW = 10.0, DIAMETER = 133.414, LIMIT = 1.0;
 float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
@@ -212,7 +212,6 @@ int main(int argc, char **argv)
     nh.getParamCached("controller/RADIUS", RADIUS);
     nh.getParamCached("controller/KV", KV);
     nh.getParamCached("controller/KW", KW);
-    nh.getParamCached("controller/DRVFRIQ", DRVFRIQ);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber nav_sub = nh.subscribe("cmd_vel", 10, navCb);

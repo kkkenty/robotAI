@@ -16,7 +16,7 @@
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
 int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
-int state = 0, i, ACC = 5, DRVFRIQ = 40;
+int state = 0, i, ACC = 5;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0;
 float RADIUS = 133.414, KV = 5.0, KW = 10.0, DIAMETER = 133.414, LIMIT = 1.0;
 float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
@@ -146,9 +146,9 @@ void StrArdCb(const msgs::SteerSensor &Ardmsg)
 }
 void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
-    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
-    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * DIAMETER * (float)DRVFRIQ;
+    DrvTwo.Now = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * DIAMETER * 1000.0;
+    DrvSix.Now = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * DIAMETER * 1000.0;
+    DrvTen.Now = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * DIAMETER * 1000.0;
 }
 void ParamSet(){
     StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
@@ -184,27 +184,25 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "controller4");
     ros::NodeHandle nh;
-    ros::NodeHandle pnh("~");
-    pnh.getParamCached("MAX_Drive_PWM", MAX_Drive_PWM);
-    pnh.getParamCached("MAX_Steer_PWM", MAX_Steer_PWM);
-    pnh.getParamCached("FRIQUENCY", FRIQUENCY);
-    pnh.getParamCached("STRKP", STRKP);
-    pnh.getParamCached("STRKI", STRKI);
-    pnh.getParamCached("STRKD", STRKD);
-    pnh.getParamCached("STROFFSET", STROFFSET);
-    pnh.getParamCached("DRVKP", DRVKP);
-    pnh.getParamCached("DRVKI", DRVKI);
-    pnh.getParamCached("DRVKD", DRVKD);
-    pnh.getParamCached("DRVOFFSET", DRVOFFSET);
-    pnh.getParamCached("DIAMETER", DIAMETER);
-    pnh.getParamCached("STRRESOLUTION", STRRESOLUTION);
-    pnh.getParamCached("DRVRESOLUTION", DRVRESOLUTION);
-    pnh.getParamCached("LIMIT", LIMIT);
-    pnh.getParamCached("ACC", ACC);
-    pnh.getParamCached("RADIUS", RADIUS);
-    pnh.getParamCached("KV", KV);
-    pnh.getParamCached("KW", KW);
-    pnh.getParamCached("DRVFRIQ", DRVFRIQ);
+    nh.getParamCached("controller/MAX_Drive_PWM", MAX_Drive_PWM);
+    nh.getParamCached("controller/MAX_Steer_PWM", MAX_Steer_PWM);
+    nh.getParamCached("controller/FRIQUENCY", FRIQUENCY);
+    nh.getParamCached("controller/STRKP", STRKP);
+    nh.getParamCached("controller/STRKI", STRKI);
+    nh.getParamCached("controller/STRKD", STRKD);
+    nh.getParamCached("controller/STROFFSET", STROFFSET);
+    nh.getParamCached("controller/DRVKP", DRVKP);
+    nh.getParamCached("controller/DRVKI", DRVKI);
+    nh.getParamCached("controller/DRVKD", DRVKD);
+    nh.getParamCached("controller/DRVOFFSET", DRVOFFSET);
+    nh.getParamCached("controller/DIAMETER", DIAMETER);
+    nh.getParamCached("controller/STRRESOLUTION", STRRESOLUTION);
+    nh.getParamCached("controller/DRVRESOLUTION", DRVRESOLUTION);
+    nh.getParamCached("controller/LIMIT", LIMIT);
+    nh.getParamCached("controller/ACC", ACC);
+    nh.getParamCached("controller/RADIUS", RADIUS);
+    nh.getParamCached("controller/KV", KV);
+    nh.getParamCached("controller/KW", KW);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);

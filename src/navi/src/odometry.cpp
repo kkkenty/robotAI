@@ -10,8 +10,9 @@
 #define deg_to_rad(deg) ((deg)/180*M_PI)
 #define rad_to_deg(rad) ((rad)/M_PI*180)
 
-int STRRESOLUTION = 2560, DRVRESOLUTION = 384, FRIQUENCY = 100, DRVFRIQ = 40;
+int STRRESOLUTION = 2560, DRVRESOLUTION = 384, FRIQUENCY = 100;
 double r = 0.133414; // 回転半径
+double DIAMETER = 0.064;// 駆動輪直径
 msgs::SteerOdometry Now;
 nav_msgs::Odometry odom;
 
@@ -35,9 +36,9 @@ void StrArdCb(const msgs::SteerSensor &Ardmsg)
 }
 void DrvArdCb(const msgs::SteerSensor &Ardmsg)
 {
-    Now.SpeedTwo = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * r * (float)DRVFRIQ;
-    Now.SpeedSix = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * r * (float)DRVFRIQ;
-    Now.SpeedTen = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * r * (float)DRVFRIQ;
+    Now.SpeedTwo = Ardmsg.SpeedTwo / (float)DRVRESOLUTION * M_PI * DIAMETER * 1000.0; // Ardからの速度単位は[pulse/ms]
+    Now.SpeedSix = Ardmsg.SpeedSix / (float)DRVRESOLUTION * M_PI * DIAMETER * 1000.0;
+    Now.SpeedTen = Ardmsg.SpeedTen / (float)DRVRESOLUTION * M_PI * DIAMETER * 1000.0;
 }
 class tf_odom
 {
@@ -153,8 +154,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "odometry");
     ros::NodeHandle nh;
     nh.getParamCached("odometry/FRIQUENCY", FRIQUENCY);
-    nh.getParamCached("odometry/DRVFRIQ", DRVFRIQ);
     nh.getParamCached("controller/RADIUS", r);
+    nh.getParamCached("controller/DIAMETER", DIAMETER);
     nh.getParamCached("controller/STRRESOLUTION", STRRESOLUTION);
     nh.getParamCached("controller/DRVRESOLUTION", DRVRESOLUTION);
 
