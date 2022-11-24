@@ -1,9 +1,9 @@
 <launch>
     <!-- Arguments -->
-    <arg name="joystick" 	  	default="false"/>
+    <arg name="joystick" 	  	default="true"/>
     <arg name="controller"  	default="true"/>
-    <arg name="StrArduino" 		default="false"/>
-    <arg name="DrvArduino" 		default="false"/>
+    <arg name="StrArduino" 		default="true"/>
+    <arg name="DrvArduino" 		default="true"/>
     <arg name="odometry"		default="true"/>
     <arg name="urg"		        default="true"/>
     <arg name="map_server"	    default="true"/>

@@ -1,5 +1,6 @@
 // joystickを使って、ステアの位置制御を逆運動学を用いて行う (より近い角度にステア角を移動させる)
 // 左スティックで平行移動 / 右スティックの左右で角速度入力(回転移動)
+// FF + FB 制御
 #include <ros/ros.h>
 #include <math.h>
 #include <sensor_msgs/Joy.h>
@@ -18,8 +19,11 @@ int STRRESOLUTION = 10240, DRVRESOLUTION = 480, STROFFSET = 10, DRVOFFSET = 10;
 int state = 0, i, ACC = 5;
 float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0.0;
 float RADIUS = 133.414, KV = 5.0, KW = 10.0, DIAMETER = 133.414, LIMIT = 1.0;
-float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
+float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0, nolG = 1.0;
 const float ROOT3 = 1.7320508;
+
+int STEP = 0;
+float KF = 0.0;
 
 class feedback{
     private:
@@ -31,6 +35,7 @@ class feedback{
         float gx = 0.0, gy = 0.0, nx = 0.0, ny = 0.0;
         msgs::PID param;
         int PID();
+        int FFPID();
         int FORWARD();
         int daikei();
         int calc_dir();
@@ -51,6 +56,20 @@ int feedback::PID(){
     Pre = Now;
     return Power;
 }
+int feedback::FFPID(){
+    Error = Goal - Now; // P項
+    Sum += (Error + ErrorPre) / 2.0; // I項
+    Dif = (float)(Now - Pre) * (float)FRIQUENCY; // D項
+    param.p = kp * Error;
+    param.i = ki * Sum;
+    param.d = kd * Dif;
+    Power = (int)(param.p + param.i - param.d) + (int)KF * Goal;
+    if(Power > 0) Power += offset;
+    else if(Power < 0) Power -= offset;
+    ErrorPre = Error;
+    Pre = Now;
+    return Power;
+}
 int feedback::daikei(){
   Error = Goal - Now; // P項 or 偏差
   if(Error > LIMIT) Power += ACC;
@@ -60,8 +79,6 @@ int feedback::daikei(){
 }
 int feedback::FORWARD(){
     Power = (int)Goal;
-    if(Power > 0) Power += offset;
-    else if(Power < 0) Power -= offset;
     return Power;
 }
 int feedback::calc_dir(){
@@ -99,6 +116,11 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
         else if(state % 2 == 0) ROS_INFO("RESTARTING!");
     }
     // ロボットの目標並進速度vx,vy、目標角速度vwを算出
+    /*
+    nolG = hypotf(joy_msg.axes[1], joy_msg.axes[0]); // KVに正規化できない ? 
+    if(nolG < 1e-5) nolG = 1.0;
+    //ROS_INFO("nolG %f", nolG);
+    */
     vx = KV * joy_msg.axes[1];
     vy = KV * joy_msg.axes[0];
     vw = KW * joy_msg.axes[3];
@@ -111,11 +133,6 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
         StrSix.gx = vx; 
         StrSix.gy = vy-vrw;
         StrSix.Goal = StrSix.calc_deg();
-        /*
-        ROS_INFO("joy %lf", atan2(vy,vx)/M_PI*180.0);
-        ROS_INFO("Goal %lf", StrSix.Goal/M_PI*180.0);
-        ROS_INFO("Now %lf\n", StrSix.Now/M_PI*180.0);
-        */
         StrTen.gx = vx-ROOT3/2.0*vrw; 
         StrTen.gy = vy+vrw/2.0;
         StrTen.Goal = StrTen.calc_deg();
@@ -130,6 +147,15 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
     DrvTwo.Goal = (float)StrTwo.calc_vel() * hypotf(vy+vrw/2.0, vx+ROOT3/2.0*vrw);
     DrvSix.Goal = (float)StrSix.calc_vel() * hypotf(vy-vrw, vx);
     DrvTen.Goal = (float)StrTen.calc_vel() * hypotf(vy+vrw/2.0, vx-ROOT3/2.0*vrw);
+   /*
+   // FF 実装のためのプログラム
+   static int i = 0;
+   if(joy_msg.buttons[3])  i++;
+   else if(joy_msg.buttons[0])  i--;
+   DrvTwo.Goal = (float)i * STEP;
+   DrvSix.Goal = (float)i * STEP;
+   DrvTen.Goal = (float)i * STEP;
+   */
 }
 void StrArdCb(const msgs::SteerSensor &Ardmsg)
 {
@@ -181,7 +207,7 @@ void LimitPwm(){
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "controller4");
+    ros::init(argc, argv, "controller5");
     ros::NodeHandle nh;
     nh.getParamCached("controller/MAX_Drive_PWM", MAX_Drive_PWM);
     nh.getParamCached("controller/MAX_Steer_PWM", MAX_Steer_PWM);
@@ -202,6 +228,8 @@ int main(int argc, char **argv)
     nh.getParamCached("controller/RADIUS", RADIUS);
     nh.getParamCached("controller/KV", KV);
     nh.getParamCached("controller/KW", KW);
+    nh.getParamCached("controller/STEP", STEP);
+    nh.getParamCached("controller/KF", KF);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber str_ard_sub = nh.subscribe("StrEncoder", 10, StrArdCb);
@@ -217,23 +245,40 @@ int main(int argc, char **argv)
         StrPwm.SteerTwo = StrTwo.PID();
         StrPwm.SteerSix = StrSix.PID();
         StrPwm.SteerTen = StrTen.PID();
-        DrvPwm.DriveTwo = DrvTwo.PID();
-        DrvPwm.DriveSix = DrvSix.PID();
-        DrvPwm.DriveTen = DrvTen.PID();
+        DrvPwm.DriveTwo = DrvTwo.FFPID();
+        DrvPwm.DriveSix = DrvSix.FFPID();
+        DrvPwm.DriveTen = DrvTen.FFPID();
         LimitPwm();
-        /*
+        
         ROS_INFO("Str.Goal %lf, %lf, %lf", StrTwo.Goal / M_PI * 180.0, StrSix.Goal / M_PI * 180.0, StrTen.Goal / M_PI * 180.0);
         ROS_INFO("Str.Now %lf, %lf, %lf", StrTwo.Now / M_PI * 180.0, StrSix.Now / M_PI * 180.0, StrTen.Now / M_PI * 180.0);
         ROS_INFO("Str.Error %lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
         ROS_INFO("Str.Pwm %d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
-        */
+               
         ROS_INFO("Drv.Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
         ROS_INFO("Drv.Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
         ROS_INFO("Drv.Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
         ROS_INFO("Drv.PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+        
         debug.p = DrvSix.Goal;
         debug.i = DrvSix.Now;
-        //str_ard_pub.publish(StrPwm);
+
+        /*
+        // FF 実装のためのプログラム
+        static int i = 0;
+        static double sum[] = {0,0,0};
+        i++;
+        sum[0] += DrvTwo.Now;
+        sum[1] += DrvSix.Now;
+        sum[2] += DrvTen.Now;
+        if(i % 100 == 0){
+            ROS_INFO("Drv.PWM   %d, %d, %d", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
+            ROS_INFO("Drv.Now   %lf, %lf, %lf", sum[0]/100.0, sum[1]/100.0, sum[2]/100.0);
+            sum[0] = 0.0; sum[1] = 0.0; sum[2] = 0.0;
+        }
+        */
+
+        str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
         debug_pub.publish(debug);
         ros::spinOnce();

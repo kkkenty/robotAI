@@ -11,8 +11,8 @@
   </group>
 
   <group if="$(arg controller)">
-    <rosparam command="load" file="$(find joy_control)/config/params.yaml"/>
-    <node name="controller" pkg="joy_control" type="controller4" output="screen" required="true"/>
+    <rosparam command="load" file="$(find joy_control)/config/params5.yaml"/>
+    <node name="controller" pkg="joy_control" type="controller5" output="screen" required="true"/>
   </group>
 
   <group if="$(arg StrArduino)">

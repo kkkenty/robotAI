@@ -1,8 +1,8 @@
 <launch>
   <!-- Arguments -->
   <arg name="scan_topic"     default="/scan"/>
-  <arg name="initial_pose_x" default="0.3"/> <!-- risa -0.5 -->
-  <arg name="initial_pose_y" default="-0.6"/> <!-- risa -0.2 -->
+  <arg name="initial_pose_x" default="0.3"/> <!-- initial pose -->>
+  <arg name="initial_pose_y" default="-0.6"/> 
   <arg name="initial_pose_a" default="0.0"/>
 
   <!-- AMCL -->
@@ -34,16 +34,16 @@
     <param name="laser_likelihood_max_dist" value="5.0"/>
     <param name="laser_model_type"          value="likelihood_field"/>
 
-    <param name="odom_model_type"           value="diff-corrected"/>
-    <param name="odom_alpha1"		    value="0.15"/> 
-    <param name="odom_alpha2" 		    value="0.15"/> 
-    <param name="odom_alpha3" 		    value="0.010"/> 
-    <param name="odom_alpha4" 		    value="0.05"/> 
-    <param name="odom_alpha5" 		    value="0.003"/> 
+    <param name="odom_model_type"           value="omni-corrected"/>
+    <param name="odom_alpha1"		            value="0.15"/> 
+    <param name="odom_alpha2" 		          value="0.15"/> 
+    <param name="odom_alpha3" 		          value="0.010"/> 
+    <param name="odom_alpha4" 		          value="0.05"/> 
+    <param name="odom_alpha5" 		          value="0.003"/> 
     <param name="odom_frame_id"             value="odom"/>
     <param name="base_frame_id"             value="base_link"/>
-    <param name="global_frame_id"	    value="map"/>
-    <param name="tf_broadcast"		    value="true"/>
+    <param name="global_frame_id"	          value="map"/>
+    <param name="tf_broadcast"		          value="true"/>
 
   </node>
 </launch>

@@ -107,7 +107,7 @@ void tf_odom::get_odom()
     x += vx*dt;
     y += vy*dt;
     yaw += vw*dt;
-    ROS_INFO("x:%lf, y:%lf, yaw:%lf", x, y, yaw);
+    //ROS_INFO("x:%lf, y:%lf, yaw:%lf", x, y, yaw);
     
     // tf message
     tf_base.setOrigin(tf::Vector3(x, y, 0.0));
