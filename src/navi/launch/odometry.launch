@@ -2,17 +2,18 @@
     <!-- Arguments -->
     <arg name="joystick" 	  	default="false"/>
     <arg name="controller"  	default="true"/>
-    <arg name="StrArduino" 		default="true"/>
-    <arg name="DrvArduino" 		default="true"/>
+    <arg name="StrArduino" 		default="false"/>
+    <arg name="DrvArduino" 		default="false"/>
     <arg name="odometry"		default="true"/>
-
-    <arg name="urg"		        default="false"/>
-    <arg name="map_server"	    default="false"/>
-    <arg name="amcl"	      	default="false"/>
-    <arg name="rviz"		    default="false"/>
+    <arg name="urg"		        default="true"/>
+    <arg name="map_server"	    default="true"/>
+    <arg name="amcl"	      	default="true"/>
+    <arg name="rviz"		    default="true"/>
+    
     <arg name="pure_pursuit"	default="false"/>
 
     <rosparam command="load" file="$(find navi)/config/params.yaml"/>
+    <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
 
     <group if="$(arg joystick)">
         <node name="joystick" pkg="joy" type="joy_node" required="true">
@@ -45,9 +46,9 @@
     <group if="$(arg urg)">
         <node pkg="urg_node" name="urg_node" type="urg_node" required="true">
             <param name="frame_id" value="base_laser"/>
-            <param name="serial_port" value="/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00"/>
-            <param name="angle_max" value="1.3"/>
-            <param name="angle_min" value="-1.3"/>
+            <param name="serial_port" value="/dev/ttyACM_URG"/>
+            <param name="angle_max" value="1.2"/>
+            <param name="angle_min" value="-1.2"/>
         </node>
     </group>
 
