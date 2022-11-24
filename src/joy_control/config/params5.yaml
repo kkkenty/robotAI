@@ -13,14 +13,14 @@ controller:
   # Drive Parameter
   MAX_Drive_PWM: 80 # 現状はPMW 80くらいしか正常に動作しない
   DRVKP: 2.5
-  DRVKI: 0.07
+  DRVKI: 0.00
   DRVKD: 0.0
   DRVOFFSET: 0
-  # others
+  # Others
   FRIQUENCY: 100
   LIMIT: 0.25
   ACC: 5
   STEP: 10 # FF 実装のためのプログラム
   KF: 17.38
   KV: 1.5 # 4.0がmax
-  KW: 2.0
+  KW: 2.5

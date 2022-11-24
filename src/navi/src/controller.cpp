@@ -1,6 +1,7 @@
 // joystickを使って、ステアの位置制御を逆運動学を用いて行う (より近い角度にステア角を移動させる)
 // 左スティックで平行移動 / 右スティックの左右で角速度入力(回転移動)
 // オドメトリからフィードバックを受ける
+// FF + FB 制御
 #include <ros/ros.h>
 #include <math.h>
 #include <sensor_msgs/Joy.h>
@@ -23,6 +24,8 @@ float STRKP = 0.0, STRKI = 0.0, STRKD = 0.0, DRVKP = 0.0, DRVKI = 0.0, DRVKD = 0
 float RADIUS = 133.414, KV = 5.0, KW = 10.0, DIAMETER = 133.414, LIMIT = 1.0;
 float vx = 0.0, vy = 0.0, vw = 0.0, vrw = 0.0;
 const float ROOT3 = 1.7320508;
+int STEP = 0;
+float KF = 0.0;
 
 class feedback{
     private:
@@ -34,6 +37,7 @@ class feedback{
         float gx = 0.0, gy = 0.0, nx = 0.0, ny = 0.0;
         msgs::PID param;
         int PID();
+        int FFPID();
         int FORWARD();
         int daikei();
         int calc_dir();
@@ -48,6 +52,20 @@ int feedback::PID(){
     param.i = ki * Sum;
     param.d = kd * Dif;
     Power = (int)(param.p + param.i - param.d);
+    if(Power > 0) Power += offset;
+    else if(Power < 0) Power -= offset;
+    ErrorPre = Error;
+    Pre = Now;
+    return Power;
+}
+int feedback::FFPID(){
+    Error = Goal - Now; // P項
+    Sum += (Error + ErrorPre) / 2.0; // I項
+    Dif = (float)(Now - Pre) * (float)FRIQUENCY; // D項
+    param.p = kp * Error;
+    param.i = ki * Sum;
+    param.d = kd * Dif;
+    Power = (int)(param.p + param.i - param.d) + (int)KF * Goal;
     if(Power > 0) Power += offset;
     else if(Power < 0) Power -= offset;
     ErrorPre = Error;
@@ -186,7 +204,7 @@ void LimitPwm(){
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "controller5");
+    ros::init(argc, argv, "controller");
     ros::NodeHandle nh;
     nh.getParamCached("controller/MAX_Drive_PWM", MAX_Drive_PWM);
     nh.getParamCached("controller/MAX_Steer_PWM", MAX_Steer_PWM);
@@ -207,23 +225,26 @@ int main(int argc, char **argv)
     nh.getParamCached("controller/RADIUS", RADIUS);
     nh.getParamCached("controller/KV", KV);
     nh.getParamCached("controller/KW", KW);
+    nh.getParamCached("controller/STEP", STEP);
+    nh.getParamCached("controller/KF", KF);
     ParamSet();
     ros::Subscriber joy_sub = nh.subscribe("joy", 10, joyCb);
     ros::Subscriber nav_sub = nh.subscribe("cmd_vel", 10, navCb);
     ros::Subscriber odo_sub = nh.subscribe("angvel", 10, OdoCb);
     ros::Publisher str_ard_pub = nh.advertise<msgs::SteerPower>("StrPower", 10);
     ros::Publisher drv_ard_pub = nh.advertise<msgs::SteerPower>("DrvPower", 10);
-    ros::Publisher dbg_pub = nh.advertise<msgs::PID>("param", 10);
+    ros::Publisher debug_pub = nh.advertise<msgs::PID>("debug", 10);
     ros::Rate loop_rate(FRIQUENCY);
+    msgs::PID debug;
 
     while (ros::ok())
     {
         StrPwm.SteerTwo = StrTwo.PID();
         StrPwm.SteerSix = StrSix.PID();
         StrPwm.SteerTen = StrTen.PID();
-        DrvPwm.DriveTwo = DrvTwo.PID();
-        DrvPwm.DriveSix = DrvSix.PID();
-        DrvPwm.DriveTen = DrvTen.PID();
+        DrvPwm.DriveTwo = DrvTwo.FFPID();
+        DrvPwm.DriveSix = DrvSix.FFPID();
+        DrvPwm.DriveTen = DrvTen.FFPID();
         // 緊急停止
         LimitPwm();
         // 情報の出力
@@ -232,16 +253,19 @@ int main(int argc, char **argv)
         ROS_INFO("Str.Now %lf, %lf, %lf", StrTwo.Now / M_PI * 180.0, StrSix.Now / M_PI * 180.0, StrTen.Now / M_PI * 180.0);
         ROS_INFO("Str.Error %lf, %lf, %lf", StrTwo.Error / M_PI * 180.0, StrSix.Error / M_PI * 180.0, StrTen.Error / M_PI * 180.0);
         ROS_INFO("Str.Pwm %d, %d, %d\n", StrPwm.SteerTwo, StrPwm.SteerSix, StrPwm.SteerTen);
-        */
+        
         ROS_INFO("Drv.Goal  %lf, %lf, %lf", DrvTwo.Goal, DrvSix.Goal, DrvTen.Goal);
         ROS_INFO("Drv.Now   %lf, %lf, %lf", DrvTwo.Now, DrvSix.Now, DrvTen.Now);
         ROS_INFO("Drv.Error %lf, %lf, %lf", DrvTwo.Error, DrvSix.Error, DrvTen.Error);
         ROS_INFO("Drv.PWM   %d, %d, %d\n", DrvPwm.DriveTwo, DrvPwm.DriveSix, DrvPwm.DriveTen);
-        
+        */
+        debug.p = DrvSix.Goal;
+        debug.i = DrvSix.Now;
+
         // publish
         str_ard_pub.publish(StrPwm);
         drv_ard_pub.publish(DrvPwm);
-        //dbg_pub.publish(StrSix.param);
+        //debug_pub.publish(debug);
         ros::spinOnce();
         loop_rate.sleep();
     }

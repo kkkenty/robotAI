@@ -9,8 +9,7 @@
     <arg name="map_server"	    default="true"/>
     <arg name="amcl"	      	default="true"/>
     <arg name="rviz"		    default="true"/>
-    
-    <arg name="pure_pursuit"	default="false"/>
+    <arg name="pure_pursuit"	default="true"/>
 
     <rosparam command="load" file="$(find navi)/config/params.yaml"/>
     <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
@@ -22,7 +21,7 @@
     </group>
 
     <group if="$(arg controller)">
-        <node name="controller" pkg="navi" type="controller5" output="screen" required="true"/>
+        <node name="controller" pkg="navi" type="controller" output="screen" required="true"/>
     </group>
 
     <group if="$(arg StrArduino)">
@@ -66,11 +65,6 @@
     </group>
   
     <group if="$(arg pure_pursuit)">
-        <node pkg="navi" type="pure_pursuit_LED" name="pure_pursuit" output="screen" required="true">
-        <param name="FRIQUENCE" value="20"/>
-        <param name="den" value="200"/>
-        <param name="ahed" value="15"/>
-        <param name="vel" value="0.45"/>
-        </node>
+        <node pkg="navi" type="pure_pursuit" name="pure_pursuit" output="screen" required="true"/>
     </group>
 </launch>
