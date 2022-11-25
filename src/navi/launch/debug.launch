@@ -1,0 +1,71 @@
+<launch>
+    <!-- Arguments -->
+    <!-- rosbag record /scan /tf -->
+    <arg name="joystick" 	  	default="true"/>
+    <arg name="controller"  	default="true"/>
+    <arg name="StrArduino" 		default="true"/>
+    <arg name="DrvArduino" 		default="true"/>
+    <arg name="odometry"		default="false"/>
+    <arg name="urg"		        default="false"/>
+    <arg name="map_server"	    default="true"/>
+    <arg name="amcl"	      	default="true"/>
+    <arg name="rviz"		    default="true"/>
+    <arg name="pure_pursuit"	default="true"/>
+
+    <rosparam command="load" file="$(find navi)/config/params.yaml"/>
+    <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
+
+    <group if="$(arg joystick)">
+        <node name="joystick" pkg="joy" type="joy_node" required="true">
+            <param name="dev" value="/dev/input/js2"/>
+        </node>
+    </group>
+
+    <group if="$(arg controller)">
+        <node name="controller" pkg="navi" type="controller" output="screen" required="true"/>
+    </group>
+
+    <group if="$(arg StrArduino)">
+        <node pkg="rosserial_python" type="serial_node.py" name="StrArduino" required="true">
+            <param name="port" value="/dev/ttyACM0"/>
+            <param name="baud" value="57600"/>
+        </node>
+    </group>
+
+    <group if="$(arg DrvArduino)">
+        <node pkg="rosserial_python" type="serial_node.py" name="DrvArduino" required="true">
+            <param name="port" value="/dev/ttyACM1"/>
+            <param name="baud" value="115200"/>
+        </node>
+    </group>
+
+    <group if="$(arg odometry)">
+        <node pkg="navi" name="odometry" type="odometry" output="screen" required="true"/>
+    </group>
+  
+    <group if="$(arg urg)">
+        <node pkg="urg_node" name="urg_node" type="urg_node" required="true">
+            <param name="frame_id" value="base_laser"/>
+            <param name="serial_port" value="/dev/ttyACM_URG"/>
+            <param name="angle_max" value="1.2"/>
+            <param name="angle_min" value="-1.2"/>
+        </node>
+    </group>
+
+    <group if="$(arg map_server)">
+        <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+    </group>
+
+    <group if="$(arg amcl)">
+        <include file="$(find navi)/launch/amcl.launch"/>
+    </group>
+
+    <group if="$(arg rviz)">
+        <node pkg="rviz" type="rviz" name="rviz" required="true"
+            args="-d $(find navi)/rviz/robot03_navi.rviz"/>
+    </group>
+  
+    <group if="$(arg pure_pursuit)">
+        <node pkg="navi" type="pure_pursuit" name="pure_pursuit" output="screen" required="true"/>
+    </group>
+</launch>

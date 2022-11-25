@@ -22,5 +22,5 @@ controller:
   ACC: 5
   STEP: 10 # FF 実装のためのプログラム
   KF: 17.38
-  KV: 1.5 # 4.0がmax
-  KW: 2.5
+  KV: 1.5 # 4.0がmaxだが転倒しやすい
+  KW: 2.5 # 2.5

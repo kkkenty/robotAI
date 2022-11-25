@@ -30,7 +30,7 @@ odometry:
 
 pure_pursuit:
   FRIQUENCY: 20
-  den: 200
+  den: 500
   ahed: 15
   VEL: 1.0 # 1.0 m/s
   MAX_VEL: 2.0
