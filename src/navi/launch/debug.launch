@@ -8,11 +8,13 @@
     <arg name="odometry"		default="false"/>
     <arg name="urg"		        default="false"/>
     <arg name="map_server"	    default="true"/>
-    <arg name="amcl"	      	default="true"/>
+    <arg name="amcl"	      	default="false"/>
+    <arg name="emcl"	      	default="true"/>
     <arg name="rviz"		    default="true"/>
-    <arg name="MMMroute"	    default="true"/>
+    <arg name="MMMroute"	    default="false"/>
+    <arg name="SMMroute"	    default="true"/>
 
-    <rosparam command="load" file="$(find navi)/config/params.yaml"/>
+    <rosparam command="load" file="$(find navi)/config/NaviParams.yaml"/>
     <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
 
     <group if="$(arg joystick)">
@@ -60,6 +62,11 @@
         <include file="$(find navi)/launch/amcl.launch"/>
     </group>
 
+    <group if="$(arg emcl)">
+        <include file="$(find navi)/launch/emcl.launch"/>
+    </group>
+    
+
     <group if="$(arg rviz)">
         <node pkg="rviz" type="rviz" name="rviz" required="true"
             args="-d $(find navi)/rviz/robot03_navi.rviz"/>
@@ -67,5 +74,9 @@
   
     <group if="$(arg MMMroute)">
         <node pkg="navi" type="MMMroute" name="MMMroute" output="screen" required="true"/>
+    </group>
+
+    <group if="$(arg SMMroute)">
+        <node pkg="navi" type="SMMroute" name="SMMroute" output="screen" required="true"/>
     </group>
 </launch>

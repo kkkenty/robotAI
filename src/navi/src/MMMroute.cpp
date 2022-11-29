@@ -5,6 +5,8 @@
 #include <math.h>
 #include <sensor_msgs/Joy.h>
 #include <visualization_msgs/Marker.h>
+#define deg_to_rad(deg) ((deg)/180*M_PI)
+#define rad_to_deg(rad) ((rad)/M_PI*180)
 
 const int pt = 26; //目標地点の個数
 //double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
@@ -16,7 +18,9 @@ double goal[pt][2] = {{0.3, -0.4}, {0.9, -0.4}, {3.5, -0.4}, {4.0, -0.9}, {4.0, 
 int stop = 1; // 停止変数
 double VEL = 1.0; // ロボットの速度
 int FRIQUENCY = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
-double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1;
+double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1, UPVEL = 1.5, STDVEL = 1.0;
+double XBORDER = 0.0, YBORDER = 0.0, UP_RANGE = 20.0, UP_YBORDER = -1.3;
+int CBORDER = 0, ROLLING = 1;
 
 // 第1,2引数と第3,4引数の点間距離を算出 //
 double dis(double x, double y, double ax, double ay){
@@ -71,18 +75,14 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
         }
     }
     if(joy_msg.buttons[7]){
-        VEL += VEL_STP;
-        if(VEL > MAX_VEL){
-            VEL = MAX_VEL;
-        }
-        ROS_INFO("Now, VELocity is [%lf]", VEL);
+        STDVEL += VEL_STP;
+        if(STDVEL > MAX_VEL)  STDVEL = MAX_VEL;
+        ROS_INFO("Now, VELocity is [%lf]", STDVEL);
     }
     if(joy_msg.buttons[6]){
-        VEL -= VEL_STP;
-        if(VEL < MIN_VEL){
-            VEL = MIN_VEL;
-        }
-        ROS_INFO("Now, VELocity is [%lf]", VEL);
+        STDVEL -= VEL_STP;
+        if(STDVEL < MIN_VEL)  STDVEL = MIN_VEL;
+        ROS_INFO("Now, VELocity is [%lf]", STDVEL);
     }
 }
 
@@ -96,10 +96,16 @@ int main(int argc, char** argv){
     nh.getParamCached("MMMroute/FRIQUENCY", FRIQUENCY);
     nh.getParamCached("MMMroute/den", den);
     nh.getParamCached("MMMroute/ahed", ahed);
-    nh.getParamCached("MMMroute/VEL", VEL);
+    nh.getParamCached("MMMroute/STDVEL", STDVEL);
+    nh.getParamCached("MMMroute/UPVEL", UPVEL);
     nh.getParamCached("MMMroute/MAX_VEL", MAX_VEL);
     nh.getParamCached("MMMroute/MIN_VEL", MIN_VEL);
     nh.getParamCached("MMMroute/VEL_STP", VEL_STP);
+    nh.getParamCached("MMMroute/XBORDER", XBORDER);
+    nh.getParamCached("MMMroute/YBORDER", YBORDER);
+    nh.getParamCached("MMMroute/CBORDER", CBORDER);
+    nh.getParamCached("MMMroute/UP_RANGE", UP_RANGE);
+    nh.getParamCached("MMMroute/UP_YBORDER", UP_YBORDER);
   
     int i, j, k;
     double x = 0.0, y = 0.0, yaw = 0.0; // robot's pose
@@ -176,43 +182,54 @@ int main(int argc, char** argv){
             ROS_ERROR("%s", ex.what());
             ros::Duration(1.0).sleep();
         continue;
-    }
-    // 最も近い点を選択 //
-    static int pose = 0;
-    pose = dismin(x, y, sum, dotpath);
-    p.x = dotpath[pose][0];
-    p.y = dotpath[pose][1]; 
-    npoint.points.push_back(p);
+        }
+        // 最も近い点を選択 //
+        static int pose = 0;
+        pose = dismin(x, y, sum, dotpath);
+        p.x = dotpath[pose][0];
+        p.y = dotpath[pose][1]; 
+        npoint.points.push_back(p);
     
-    // 目標点の設定 //
-    pose += ahed;
-    if(pose >= sum){ // poseの繰り上げ
-        pose -= sum;
-    }
-    p.x = dotpath[pose][0];
-    p.y = dotpath[pose][1];
-    gpoint.points.push_back(p);
+        // 目標点の設定 //
+        pose += ahed;
+        if(pose >= sum){ // poseの繰り上げ
+            pose -= sum;
+        }
+        p.x = dotpath[pose][0];
+        p.y = dotpath[pose][1];
+        gpoint.points.push_back(p);
     
-    // 目標点との相対的な角度、距離の算出 //
-    alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
-    L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
-    
-    // 車速と角速度の算出 //
-    cmd.linear.x = VEL;
-    cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
+        // 目標点との相対的な角度、距離の算出 //
+        alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
+        L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
+        //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
-    // naviの停止コマンド //
-    if(stop){ 
-        cmd.linear.x = 0.0;
-        cmd.linear.y = 0.0;
-        cmd.angular.z = 0.0;
-    }
+        // 直線走行時は速度を上げる //
+        if(fabs(alpha) < deg_to_rad(UP_RANGE)){ // if need y < UP_YBORDER && 
+            VEL = UPVEL;
+        }
+        else{
+            VEL = STDVEL;
+        }
+
+        // 車速と角速度の算出 //
+        if(VEL > MAX_VEL)  VEL = MAX_VEL;
+        if(VEL < MIN_VEL)  VEL = MIN_VEL;
+        cmd.linear.x = VEL;
+        cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
+
+        // naviの停止コマンド //
+        if(stop){ 
+            cmd.linear.x = 0.0;
+            cmd.linear.y = 0.0;
+            cmd.angular.z = 0.0;
+        }
     
-    // pub配信 //
-    cmd_pub.publish(cmd);
-    marker_pub.publish(points);
-    marker_pub.publish(npoint);
-    marker_pub.publish(gpoint);
+        // pub配信 //
+        cmd_pub.publish(cmd);
+        marker_pub.publish(points);
+        marker_pub.publish(npoint);
+        marker_pub.publish(gpoint);
     }
     return 0;
 }

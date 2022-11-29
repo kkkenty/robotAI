@@ -143,7 +143,7 @@ include_directories(
 add_executable(controller src/controller.cpp)
 add_executable(odometry src/odometry.cpp)
 add_executable(MMMroute src/MMMroute.cpp)
-add_executable(SMLroute src/SMLroute.cpp)
+add_executable(SMMroute src/SMMroute.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,7 +157,7 @@ add_executable(SMLroute src/SMLroute.cpp)
 add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(MMMroute ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(SMLroute ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(SMMroute ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -172,7 +172,7 @@ target_link_libraries(odometry
 target_link_libraries(MMMroute
   ${catkin_LIBRARIES}
 )
-target_link_libraries(SMLroute
+target_link_libraries(SMMroute
   ${catkin_LIBRARIES}
 )
 
