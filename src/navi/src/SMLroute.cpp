@@ -17,6 +17,8 @@ int stop = 1; // 停止変数
 double VEL = 1.0; // ロボットの速度
 int FRIQUENCY = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
 double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1;
+double XBORDER = 0.0, YBORDER = 0.0;
+int CBORDER = 0, ROLLING = 1;
 
 // 第1,2引数と第3,4引数の点間距離を算出 //
 double dis(double x, double y, double ax, double ay){
@@ -87,19 +89,22 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
 }
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "pure_pursuit");
+    ros::init(argc, argv, "SMLroute");
     ros::NodeHandle nh;
   
     tf::StampedTransform tf;
     geometry_msgs::Twist cmd;
     
-    nh.getParamCached("pure_pursuit/FRIQUENCY", FRIQUENCY);
-    nh.getParamCached("pure_pursuit/den", den);
-    nh.getParamCached("pure_pursuit/ahed", ahed);
-    nh.getParamCached("pure_pursuit/VEL", VEL);
-    nh.getParamCached("pure_pursuit/MAX_VEL", MAX_VEL);
-    nh.getParamCached("pure_pursuit/MIN_VEL", MIN_VEL);
-    nh.getParamCached("pure_pursuit/VEL_STP", VEL_STP);
+    nh.getParamCached("SMLroute/FRIQUENCY", FRIQUENCY);
+    nh.getParamCached("SMLroute/den", den);
+    nh.getParamCached("SMLroute/ahed", ahed);
+    nh.getParamCached("SMLroute/VEL", VEL);
+    nh.getParamCached("SMLroute/MAX_VEL", MAX_VEL);
+    nh.getParamCached("SMLroute/MIN_VEL", MIN_VEL);
+    nh.getParamCached("SMLroute/VEL_STP", VEL_STP);
+    nh.getParamCached("SMLroute/XBORDER", XBORDER);
+    nh.getParamCached("SMLroute/YBORDER", YBORDER);
+    nh.getParamCached("SMLroute/CBORDER", CBORDER);
   
     int i, j, k;
     double x = 0.0, y = 0.0, yaw = 0.0; // robot's pose
@@ -176,43 +181,58 @@ int main(int argc, char** argv){
             ROS_ERROR("%s", ex.what());
             ros::Duration(1.0).sleep();
         continue;
-    }
-    // 最も近い点を選択 //
-    static int pose = 0;
-    pose = dismin(x, y, sum, dotpath);
-    p.x = dotpath[pose][0];
-    p.y = dotpath[pose][1]; 
-    npoint.points.push_back(p);
+        }
+        // 最も近い点を選択 //
+        static int pose = 0;
+        pose = dismin(x, y, sum, dotpath);
+        p.x = dotpath[pose][0];
+        p.y = dotpath[pose][1]; 
+        npoint.points.push_back(p);
     
-    // 目標点の設定 //
-    pose += ahed;
-    if(pose >= sum){ // poseの繰り上げ
-        pose -= sum;
-    }
-    p.x = dotpath[pose][0];
-    p.y = dotpath[pose][1];
-    gpoint.points.push_back(p);
+        // 目標点の設定 //
+        pose += ahed;
+        if(pose >= sum){ // poseの繰り上げ
+            pose -= sum;
+        }
+        p.x = dotpath[pose][0];
+        p.y = dotpath[pose][1];
+        gpoint.points.push_back(p);
     
-    // 目標点との相対的な角度、距離の算出 //
-    alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
-    L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
+        // 目標点との相対的な角度、距離の算出 //
+        alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
+        L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
     
-    // 車速と角速度の算出 //
-    cmd.linear.x = VEL;
-    cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
+        // 車速と角速度の算出 //
+        cmd.linear.x = VEL;
+        cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
 
-    // naviの停止コマンド //
-    if(stop){ 
-        cmd.linear.x = 0.0;
-        cmd.linear.y = 0.0;
-        cmd.angular.z = 0.0;
-    }
+        // ボール持ち替え時は停止 //
+        if(x < XBORDER && y < YBORDER && ROLLING == 1){
+            stop = 1;
+            static int count = 0;
+            count++;
+            if(count > CBORDER){
+                ROLLING = 0;
+                count = 0;
+                stop = 0;
+            }
+        }
+        if(!(x < XBORDER && y < YBORDER)){
+            ROLLING = 1;
+        }
+
+        // naviの停止コマンド //
+        if(stop){ 
+            cmd.linear.x = 0.0;
+            cmd.linear.y = 0.0;
+            cmd.angular.z = 0.0;
+        }
     
-    // pub配信 //
-    cmd_pub.publish(cmd);
-    marker_pub.publish(points);
-    marker_pub.publish(npoint);
-    marker_pub.publish(gpoint);
+        // pub配信 //
+        cmd_pub.publish(cmd);
+        marker_pub.publish(points);
+        marker_pub.publish(npoint);
+        marker_pub.publish(gpoint);
     }
     return 0;
 }

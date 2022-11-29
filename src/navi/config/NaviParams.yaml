@@ -28,7 +28,7 @@ controller:
 odometry: 
   FRIQUENCY: 100
 
-pure_pursuit:
+MMMroute:
   FRIQUENCY: 20
   den: 500
   ahed: 15
@@ -36,3 +36,15 @@ pure_pursuit:
   MAX_VEL: 2.0
   MIN_VEL: 0.1
   VEL_STP: 0.1
+
+SMLroute:
+  FRIQUENCY: 20
+  den: 500
+  ahed: 15
+  VEL: 1.0 # 1.0 m/s
+  MAX_VEL: 2.0
+  MIN_VEL: 0.1
+  VEL_STP: 0.1
+  XBORDER: 1.0
+  YBORDER: -2.0
+  CBORDER: 60

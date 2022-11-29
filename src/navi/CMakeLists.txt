@@ -142,7 +142,8 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/navi_node.cpp)
 add_executable(controller src/controller.cpp)
 add_executable(odometry src/odometry.cpp)
-add_executable(pure_pursuit src/pure_pursuit.cpp)
+add_executable(MMMroute src/MMMroute.cpp)
+add_executable(SMLroute src/SMLroute.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,7 +156,8 @@ add_executable(pure_pursuit src/pure_pursuit.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(pure_pursuit ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(MMMroute ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(SMLroute ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -167,7 +169,10 @@ target_link_libraries(controller
 target_link_libraries(odometry
   ${catkin_LIBRARIES}
 )
-target_link_libraries(pure_pursuit
+target_link_libraries(MMMroute
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(SMLroute
   ${catkin_LIBRARIES}
 )
 

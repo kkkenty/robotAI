@@ -9,9 +9,9 @@
     <arg name="map_server"	    default="true"/>
     <arg name="amcl"	      	default="true"/>
     <arg name="rviz"		    default="true"/>
-    <arg name="pure_pursuit"	default="true"/>
+    <arg name="MMMroute"	    default="true"/>
 
-    <rosparam command="load" file="$(find navi)/config/params.yaml"/>
+    <rosparam command="load" file="$(find navi)/config/NaviParams.yaml"/>
     <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
 
     <group if="$(arg joystick)">
@@ -64,7 +64,7 @@
             args="-d $(find navi)/rviz/robot03_navi.rviz"/>
     </group>
   
-    <group if="$(arg pure_pursuit)">
-        <node pkg="navi" type="pure_pursuit" name="pure_pursuit" output="screen" required="true"/>
+    <group if="$(arg MMMroute)">
+        <node pkg="navi" type="MMMroute" name="MMMroute" output="screen" required="true"/>
     </group>
 </launch>

@@ -1,16 +1,16 @@
 <launch>
     <!-- Arguments -->
     <!-- rosbag record /scan /tf -->
-    <arg name="joystick" 	  	default="true"/>
-    <arg name="controller"  	default="true"/>
-    <arg name="StrArduino" 		default="true"/>
-    <arg name="DrvArduino" 		default="true"/>
+    <arg name="joystick" 	  	default="false"/>
+    <arg name="controller"  	default="false"/>
+    <arg name="StrArduino" 		default="false"/>
+    <arg name="DrvArduino" 		default="false"/>
     <arg name="odometry"		default="false"/>
     <arg name="urg"		        default="false"/>
     <arg name="map_server"	    default="true"/>
     <arg name="amcl"	      	default="true"/>
     <arg name="rviz"		    default="true"/>
-    <arg name="pure_pursuit"	default="true"/>
+    <arg name="MMMroute"	    default="true"/>
 
     <rosparam command="load" file="$(find navi)/config/params.yaml"/>
     <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
@@ -65,7 +65,7 @@
             args="-d $(find navi)/rviz/robot03_navi.rviz"/>
     </group>
   
-    <group if="$(arg pure_pursuit)">
-        <node pkg="navi" type="pure_pursuit" name="pure_pursuit" output="screen" required="true"/>
+    <group if="$(arg MMMroute)">
+        <node pkg="navi" type="MMMroute" name="MMMroute" output="screen" required="true"/>
     </group>
 </launch>

@@ -24,17 +24,18 @@ int dismin(const double &x, const double &y, int &sum, double dotpath[][2]);
 void joyCb(const sensor_msgs::Joy &joy_msg);
 
 int main(int argc, char** argv){
-  ros::init(argc, argv, "pure_pursuit_LED");
+  ros::init(argc, argv, "test_pure_pursuit");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
   
   tf::StampedTransform tf;
   geometry_msgs::Twist cmd;
-  int FRIQUENCE = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
+  int FRIQUENCE = 20, den = 100, ahed = 5, last = 40, checkpoint = 0, zyouken = 1; // 経路分割数、lookaheddistance
   pnh.getParam("FRIQUENCE", FRIQUENCE);
   pnh.getParam("den", den);
   pnh.getParam("ahed", ahed);
   pnh.getParam("vel", vel);
+  pnh.getParam("last", last);
   
   int i, j, k;
   double x = 0.0, y = 0.0, yaw = 0.0; // robot's pose
@@ -121,6 +122,14 @@ int main(int argc, char** argv){
     p.x = dotpath[pose][0];
     p.y = dotpath[pose][1]; 
     npoint.points.push_back(p);
+    if(pose >= sum - last && zyouken == 1){
+      checkpoint++;
+      zyouken = 0;
+      ROS_INFO("checkpoint is %d", checkpoint);
+    }
+    if(pose <= last){
+      zyouken = 1;
+    }
     
     // 目標点の設定 //
     pose += ahed;
@@ -138,6 +147,9 @@ int main(int argc, char** argv){
     // 車速と角速度の算出 //
     cmd.linear.x = vel;
     cmd.angular.z = 2.0 * vel * sin(alpha) / L;
+    if(checkpoint == 3){
+      cmd.angular.z = 0.0;
+    }
     // naviの停止コマンド //
     if(stap){ 
       cmd.linear.x = 0.0;
