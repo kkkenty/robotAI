@@ -1,9 +1,4 @@
-// 初回のみ、ゴール地点をaheadよりも遠くにする？？？
-
-
-
-
-
+// 大ボールを移動できるように直線+旋回を追加
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -15,12 +10,14 @@
 #define deg_to_rad(deg) ((deg)/180*M_PI)
 #define rad_to_deg(rad) ((rad)/M_PI*180)
 
-const int pt = 26; //目標地点の個数
-//double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
-//double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
+const int pt = 5; //目標地点の個数
+double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
+/*
+double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
 double goal[pt][2] = {{0.3, -0.4}, {1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
                                                 {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
                                                 {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り
+*/
 
 int stop = 1, MODE = 1, SETBALL = 0; // 停止変数
 double VEL = 1.0; // ロボットの速度
@@ -28,6 +25,8 @@ int FRIQUENCY = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
 double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1, UPVEL = 1.5, STDVEL = 1.0;
 double BallSetBorderX = 0.0, BallSetBorderY = 0.0, UP_RANGE = 20.0, BallToStr =  1.0, UpBorderXup = 3.3, UpBorderXdown = 1.0;
 double BallSetGoalX = 0.0, BallSetGoalY = 0.0, BallSetGoalR = 0.0, StrBackGoalX = 0.0, StrBackGoalY = 0.0, StrBackGoalR = 0.0;
+int TurnRadiusNum = 10;
+double TURNVEL = 1.0;
 
 // 第1,2引数と第3,4引数の点間距離を算出 //
 double dis(double x, double y, double ax, double ay){
@@ -94,33 +93,35 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
 }
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "SMMroute");
+    ros::init(argc, argv, "SMLroute");
     ros::NodeHandle nh;
   
     tf::StampedTransform tf;
     geometry_msgs::Twist cmd;
     
-    nh.getParamCached("SMMroute/FRIQUENCY", FRIQUENCY);
-    nh.getParamCached("SMMroute/den", den);
-    nh.getParamCached("SMMroute/ahed", ahed);
-    nh.getParamCached("SMMroute/STDVEL", STDVEL);
-    nh.getParamCached("SMMroute/UPVEL", UPVEL);
-    nh.getParamCached("SMMroute/MAX_VEL", MAX_VEL);
-    nh.getParamCached("SMMroute/MIN_VEL", MIN_VEL);
-    nh.getParamCached("SMMroute/VEL_STP", VEL_STP);
-    nh.getParamCached("SMMroute/BallSetBorderX", BallSetBorderX);
-    nh.getParamCached("SMMroute/BallSetBorderY", BallSetBorderY);
-    nh.getParamCached("SMMroute/BallSetGoalX", BallSetGoalX);
-    nh.getParamCached("SMMroute/BallSetGoalY", BallSetGoalY);
-    nh.getParamCached("SMMroute/BallSetGoalR", BallSetGoalR);
-    nh.getParamCached("SMMroute/StrBackGoalX", StrBackGoalX);
-    nh.getParamCached("SMMroute/StrBackGoalY", StrBackGoalY);
-    nh.getParamCached("SMMroute/StrBackGoalR", StrBackGoalR);
-    nh.getParamCached("SMMroute/UP_RANGE", UP_RANGE);
-    nh.getParamCached("SMMroute/UpBorderXup", UpBorderXup);
-    nh.getParamCached("SMMroute/UpBorderXdown", UpBorderXdown);
+    nh.getParamCached("SMLroute/FRIQUENCY", FRIQUENCY);
+    nh.getParamCached("SMLroute/den", den);
+    nh.getParamCached("SMLroute/ahed", ahed);
+    nh.getParamCached("SMLroute/STDVEL", STDVEL);
+    nh.getParamCached("SMLroute/UPVEL", UPVEL);
+    nh.getParamCached("SMLroute/MAX_VEL", MAX_VEL);
+    nh.getParamCached("SMLroute/MIN_VEL", MIN_VEL);
+    nh.getParamCached("SMLroute/VEL_STP", VEL_STP);
+    nh.getParamCached("SMLroute/BallSetBorderX", BallSetBorderX);
+    nh.getParamCached("SMLroute/BallSetBorderY", BallSetBorderY);
+    nh.getParamCached("SMLroute/BallSetGoalX", BallSetGoalX);
+    nh.getParamCached("SMLroute/BallSetGoalY", BallSetGoalY);
+    nh.getParamCached("SMLroute/BallSetGoalR", BallSetGoalR);
+    nh.getParamCached("SMLroute/StrBackGoalX", StrBackGoalX);
+    nh.getParamCached("SMLroute/StrBackGoalY", StrBackGoalY);
+    nh.getParamCached("SMLroute/StrBackGoalR", StrBackGoalR);
+    nh.getParamCached("SMLroute/UP_RANGE", UP_RANGE);
+    nh.getParamCached("SMLroute/UpBorderXup", UpBorderXup);
+    nh.getParamCached("SMLroute/UpBorderXdown", UpBorderXdown);
+    nh.getParamCached("SMLroute/TurnRadiusNum", TurnRadiusNum);
+    nh.getParamCached("SMLroute/TURNVEL", TURNVEL);
   
-    int i, j, k;
+    int i, j, k, turnpoint;
     double x = 0.0, y = 0.0, yaw = 0.0; // robot's pose
     double alpha = 0.0, L = 0.0; // 方位誤差、距離
   
@@ -142,13 +143,14 @@ int main(int argc, char** argv){
     for(i= 0;i<pt-1;i++){
         path[i][0] = goal[i+1][0] - goal[i][0]; // x
         path[i][1] = goal[i+1][1] - goal[i][1]; // y
-        lpath[i] = sqrt(pow(path[i][0], 2) + pow(path[i][1], 2));
+        lpath[i] = hypot(path[i][0], path[i][1]);
         sumpath += lpath[i];
     }
     for(i=0;i<pt-1;i++){
         npath[i] = round((int)(lpath[i] / sumpath * (double)den));
         sum += npath[i];
     }
+    turnpoint = npath[0]; // 最初の旋回地点
     double dotpath[sum][2]; // 点線の座標
     geometry_msgs::Point p;
     for(i=0,k=0;i<pt-1;i++){
@@ -220,35 +222,91 @@ int main(int argc, char** argv){
             p.x = dotpath[pose][0];
             p.y = dotpath[pose][1]; 
             npoint.points.push_back(p);
-    
-            // 目標点の設定 //
-            pose += ahed;
-            if(pose >= sum){ // poseの繰り上げ
-                pose -= sum;
-            }
-            p.x = dotpath[pose][0];
-            p.y = dotpath[pose][1];
-            gpoint.points.push_back(p);
-    
-            // 目標点との相対的な角度、距離の算出 //
-            alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
-            L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
-            //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
-            // 直線走行時は速度を上げる //
-            if(fabs(alpha) < deg_to_rad(UP_RANGE) && x > UpBorderXdown && x < UpBorderXup){ 
-                VEL = UPVEL;
+            // 旋回 //
+            if(pose >= turnpoint - TurnRadiusNum){
+                static int turncount = 0;
+                double theta = 0;
+                if(turncount % 4 == 0){ // 左上
+                    if(x >= dotpath[turnpoint][0]){
+                        turncount++;
+                        turnpoint += npath[turncount];
+                    }
+                    else{
+                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                        cmd.linear.x = - TURNVEL * sin(theta);
+                        cmd.linear.y = TURNVEL * cos(theta);
+                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                    }
+                }
+                if(turncount % 4 == 1){ // 右上
+                    if(y <= dotpath[turnpoint][0]){
+                        turncount++;
+                        turnpoint += npath[turncount];
+                    }
+                    else{
+                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                        cmd.linear.x = - TURNVEL * sin(theta);
+                        cmd.linear.y = TURNVEL * cos(theta);
+                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                    }
+                }
+                if(turncount % 4 == 2){ // 右下
+                    if(x <= dotpath[turnpoint][0]){
+                        turncount++;
+                        turnpoint += npath[turncount];
+                    }
+                    else{
+                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                        cmd.linear.x = - TURNVEL * sin(theta);
+                        cmd.linear.y = TURNVEL * cos(theta);
+                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                    }
+                }
+                if(turncount % 4 == 3){ // 左下
+                    if(y >= dotpath[turnpoint][0]){
+                        turncount++;
+                        turnpoint = 0;
+                    }
+                    else{
+                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                        cmd.linear.x = - TURNVEL * sin(theta);
+                        cmd.linear.y = TURNVEL * cos(theta);
+                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                    }
+                }
+                ROS_INFO("the mode is TURNING");
             }
             else{
-                VEL = STDVEL;
-            }
+                // 目標点の設定 //
+                pose += ahed;
+                if(pose >= sum){ // poseの繰り上げ
+                    pose -= sum;
+                }
+                p.x = dotpath[pose][0];
+                p.y = dotpath[pose][1];
+                gpoint.points.push_back(p);
+    
+                // 目標点との相対的な角度、距離の算出 //
+                alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
+                L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
+                //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
-            // 車速と角速度の算出 //
-            if(VEL > MAX_VEL)  VEL = MAX_VEL;
-            if(VEL < MIN_VEL)  VEL = MIN_VEL;
-            cmd.linear.x = VEL;
-            cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
-            ROS_INFO("the mode is 1");
+                // 直線走行時は速度を上げる //
+                if(fabs(alpha) < deg_to_rad(UP_RANGE) && x > UpBorderXdown && x < UpBorderXup){ 
+                    VEL = UPVEL;
+                }
+                else{
+                    VEL = STDVEL;
+                }
+
+                // 車速と角速度の算出 //
+                if(VEL > MAX_VEL)  VEL = MAX_VEL;
+                if(VEL < MIN_VEL)  VEL = MIN_VEL;
+                cmd.linear.x = VEL;
+                cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
+                ROS_INFO("the mode is 1");
+            }
         }
         else if(MODE == 2){
             // ボール置き動作
@@ -290,7 +348,7 @@ int main(int argc, char** argv){
                 LOOP++;
             }
             ROS_INFO("the mode is 3");
-        }    
+        }
 
         // naviの停止コマンド //
         if(stop){ 

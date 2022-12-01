@@ -10,8 +10,10 @@
     <arg name="amcl"	      	default="false"/>
     <arg name="emcl"	      	default="true"/>
     <arg name="rviz"		    default="true"/>
-    <arg name="MMMroute"	    default="false"/>
-    <arg name="SMMroute"	    default="true"/>
+
+    <arg name="MMMroute"        default="false"/>
+    <arg name="SMMroute"        default="false"/>
+    <arg name="SMLroute"        default="true"/>
 
     <rosparam command="load" file="$(find navi)/config/NaviParams.yaml"/>
     <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>
@@ -77,5 +79,9 @@
 
     <group if="$(arg SMMroute)">
         <node pkg="navi" type="SMMroute" name="SMMroute" output="screen" required="true"/>
+    </group>
+
+    <group if="$(arg SMLroute)">
+        <node pkg="navi" type="SMLroute" name="SMLroute" output="screen" required="true"/>
     </group>
 </launch>

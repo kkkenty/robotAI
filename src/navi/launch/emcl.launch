@@ -2,7 +2,7 @@
   <!-- Arguments -->
   <arg name="scan_topic"     default="/scan"/>
   <arg name="initial_pose_x" default="0.3"/>
-  <arg name="initial_pose_y" default="-0.3"/>
+  <arg name="initial_pose_y" default="-0.4"/>
   <arg name="initial_pose_a" default="0.0"/>
 
   <!-- EMCL -->
@@ -22,7 +22,7 @@
     <param name="odom_fw_dev_per_fw"       value="0.19"/>
     <param name="odom_fw_dev_per_rot"      value="0.0001"/>
     <param name="odom_rot_dev_per_fw"      value="0.13"/>
-    <param name="odom_rot_dev_per_rot"     value="0.2"/>
+    <param name="odom_rot_dev_per_rot"     value="0.21"/>
 
     <param name="laser_likelihood_max_dist" value="0.2"/>
 
