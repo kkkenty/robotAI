@@ -46,6 +46,9 @@ Using pseudo-inverse matrix
 roslaunch joy_control control4.launch  
 ![joy_control](joy_control.png)
 
+# 自律走行  
+![self_navigation](Self-navigation.png)
+
 # memo
 (10/22)機体を走行させた感想  
 問題：ヨー角がずれて操縦が困難  
@@ -75,3 +78,6 @@ roslaunch joy_control control4.launch
 議題  
 ・大玉を滑らすか、ドリブルするか  
 ・結果を求めるか、ロマン(全方向移動)を求めるか  
+
+(12/2)  
+遅くてもいいので、競技達成できる動作を組み込む  

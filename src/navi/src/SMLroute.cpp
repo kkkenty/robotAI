@@ -1,10 +1,4 @@
 // 大ボールを移動できるように直線+旋回を追加
-// 右上のポイントが何故か反応しない
-// 旋回が行き過ぎたり暴走する
-
-
-
-
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -17,7 +11,7 @@
 #define rad_to_deg(rad) ((rad)/M_PI*180)
 
 const int pt = 5; //目標地点の個数
-double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
+double goal[pt][2] = {{0.3, -0.4}, {4.0, -0.4}, {4.0, -2.3}, {0.3, -2.3}, {0.3, -0.4}};  // 時計回り
 /*
 double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
 double goal[pt][2] = {{0.3, -0.4}, {1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
@@ -169,7 +163,8 @@ int main(int argc, char** argv){
     }
     double OnePath;
     OnePath = sumpath / (double)sum;
-  
+    MODE = 1;
+
     // pubsub宣言 //
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("marker", 10);
@@ -208,7 +203,7 @@ int main(int argc, char** argv){
         }
 
         // 動作変更 //
-        MODE = 1;
+        //MODE = 1;
         /*
         static int LOOP = 1;
         if(LOOP>=2){
@@ -225,6 +220,7 @@ int main(int argc, char** argv){
             SETBALL = 0;
         }*/
 
+        static int interval = 0, interval2 = 0, inisial = 0;
         if(MODE == 1){
             // 最も近い点を選択 //
             static int pose = 0;
@@ -232,70 +228,14 @@ int main(int argc, char** argv){
             p.x = dotpath[pose][0];
             p.y = dotpath[pose][1]; 
             npoint.points.push_back(p);
+            // ROS_INFO("pose: %d",pose);
+            if(pose > 0 && pose < (sum / 4)){
+                inisial++;
+            }
 
-            // 旋回 //
-            static int interval = 0, interval2 = 0;
-            if(pose >= turnpoint - TurnRadiusNum){
-                static int turncount = 0;
-                double theta = 0;
-                interval2++;
-                cmd.linear.x = 0;
-                cmd.linear.y = 0;
-                cmd.angular.z = 0;
-                if(turncount % 4 == 0 && interval2 > FRIQUENCY){ // 左上
-                    if(x >= dotpath[turnpoint][0]){
-                        turncount++;
-                        turnpoint += npath[turncount % 4];
-                        interval = 0; interval2 = 0;
-                    }
-                    else{
-                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
-                        cmd.linear.y = TURNVEL * cos(theta+yaw);
-                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        //ROS_INFO("x, y, z: %lf %lf %lf", cmd.linear.x, cmd.linear.y, cmd.angular.z);
-                    }
-                }
-                else if(turncount % 4 == 1 && interval2 > FRIQUENCY){ // 右上
-                    if(y <= dotpath[turnpoint][0]){
-                        turncount++;
-                        turnpoint += npath[turncount % 4];
-                        interval = 0; interval2 = 0;
-                    }
-                    else{
-                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
-                        cmd.linear.y = TURNVEL * cos(theta+yaw);
-                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                    }
-                }
-                else if(turncount % 4 == 2 && interval2 > FRIQUENCY){ // 右下
-                    if(x <= dotpath[turnpoint][0]){
-                        turncount++;
-                        turnpoint += npath[turncount % 4];
-                        interval = 0; interval2 = 0;
-                    }
-                    else{
-                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
-                        cmd.linear.y = TURNVEL * cos(theta+yaw);
-                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                    }
-                }
-                else if(turncount % 4 == 3 && interval2 > FRIQUENCY){ // 左下
-                    if(y >= dotpath[turnpoint][0]){
-                        turncount++;
-                        turnpoint = npath[turncount % 4]; // 最初の旋回地点
-                        interval = 0; interval2 = 0;
-                    }
-                    else{
-                        theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
-                        cmd.linear.y = TURNVEL * cos(theta+yaw);
-                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                    }
-                }
-                ROS_INFO("the mode is TURNING [%d]", turncount);
+            // 旋回動作に以降 //
+            if(pose >= turnpoint - TurnRadiusNum && inisial >= 5){ // 周回はじめにループするのを防ぐ必要あり
+                MODE = 4;
             }
             else if(interval > FRIQUENCY){
                 // 目標点の設定 //
@@ -325,7 +265,7 @@ int main(int argc, char** argv){
                 if(VEL < MIN_VEL)  VEL = MIN_VEL;
                 cmd.linear.x = VEL;
                 cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
-                //ROS_INFO("the mode is 1");
+                ROS_INFO("the mode is 1");
             }
             else{
                 interval++;
@@ -333,6 +273,85 @@ int main(int argc, char** argv){
                 cmd.linear.y = 0;
                 cmd.angular.z = 0;
             }
+        }
+        else if(MODE == 4){
+            static int turncount = 0;
+            double theta = 0;
+            interval2++;
+            cmd.linear.x = 0;
+            cmd.linear.y = 0;
+            cmd.angular.z = 0;
+            if(turncount % 4 == 0 && interval2 > FRIQUENCY){ // 左上
+                p.x = dotpath[turnpoint][0];
+                p.y = dotpath[turnpoint][1]; 
+                gpoint.points.push_back(p);
+                if(x >= dotpath[turnpoint][0]){ // yaw <= deg_to_rad(-85)
+                    turncount++;
+                    turnpoint += npath[turncount % 4];
+                    interval = 0; interval2 = 0;
+                    MODE = 1;
+                }
+                else{
+                    theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                    cmd.linear.x = - TURNVEL * sin(theta+yaw);
+                    cmd.linear.y = TURNVEL * cos(theta+yaw);
+                    cmd.angular.z = - TURNVEL / (OnePath * (double)TurnRadiusNum);
+                }
+            }
+            else if(turncount % 4 == 1 && interval2 > FRIQUENCY){ // 右上
+                    p.x = dotpath[turnpoint][0];
+                    p.y = dotpath[turnpoint][1]; 
+                    gpoint.points.push_back(p);
+                if(y <= dotpath[turnpoint][1]){ // yaw <= deg_to_rad(-175) || yaw >= deg_to_rad(175)
+                    turncount++;
+                    turnpoint += npath[turncount % 4];
+                    interval = 0; interval2 = 0;
+                    MODE = 1;
+                }
+                else{
+                    theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                    cmd.linear.x = TURNVEL * sin(theta+yaw);
+                    cmd.linear.y = - TURNVEL * cos(theta+yaw);
+                    cmd.angular.z = - TURNVEL / (OnePath * (double)TurnRadiusNum);
+                }
+            }
+            else if(turncount % 4 == 2 && interval2 > FRIQUENCY){ // 右下
+                p.x = dotpath[turnpoint][0];
+                p.y = dotpath[turnpoint][1]; 
+                gpoint.points.push_back(p);                
+                if(x <= dotpath[turnpoint][0]){ // yaw <= deg_to_rad(95)
+                    turncount++;
+                    turnpoint += npath[turncount % 4]; 
+                    interval = 0; interval2 = 0;
+                    MODE = 1;
+                }
+                else{
+                    theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                    cmd.linear.x = - TURNVEL * sin(theta+yaw);
+                    cmd.linear.y = TURNVEL * cos(theta+yaw);
+                    cmd.angular.z = - TURNVEL / (OnePath * (double)TurnRadiusNum);
+                }
+            }
+            else if(turncount % 4 == 3 && interval2 > FRIQUENCY){ // 左下
+                turnpoint = 0; // 最終ゴールは最初の点
+                p.x = dotpath[turnpoint][0]; 
+                p.y = dotpath[turnpoint][1]; 
+                gpoint.points.push_back(p);                
+                if(y >= dotpath[turnpoint][1]){ // yaw <= deg_to_rad(5)
+                    turncount++;
+                    turnpoint = npath[turncount % 4]; // 最初の旋回地点
+                    interval = 0; interval2 = 0;
+                    MODE = 1;
+                }
+                else{
+                    theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                    cmd.linear.x = TURNVEL * sin(theta+yaw);
+                    cmd.linear.y = - TURNVEL * cos(theta+yaw);
+                    cmd.angular.z = - TURNVEL / (OnePath * (double)TurnRadiusNum);
+                }
+            }
+            ROS_INFO("x, y, z: %lf %lf %lf", cmd.linear.x, cmd.linear.y, cmd.angular.z);
+            // ROS_INFO("the mode is TURNING [%d]", turncount);
         }
         /*
         else if(MODE == 2){

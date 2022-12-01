@@ -11,9 +11,9 @@
     <arg name="emcl"	      	default="true"/>
     <arg name="rviz"		    default="true"/>
 
-    <arg name="MMMroute"        default="true"/>
+    <arg name="MMMroute"        default="false"/>
     <arg name="SMMroute"        default="false"/>
-    <arg name="SMLroute"        default="false"/>
+    <arg name="SMLroute"        default="true"/>
 
     <rosparam command="load" file="$(find navi)/config/NaviParams.yaml"/>
     <arg name="map_file"	 default="$(find navi)/map/test2.yaml"/>

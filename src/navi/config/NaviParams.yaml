@@ -68,12 +68,12 @@ SMMroute:
 
 # (12/2)旋回がうまく行かない
 SMLroute:
-  FRIQUENCY: 50
+  FRIQUENCY: 20
   den: 100
   ahed: 10
-  STDVEL: 0.8 # 1.0 m/s
-  UPVEL: 0.8 
-  TURNVEL: 0.6 #[m/s]
+  STDVEL: 1.0 # 1.0 m/s
+  UPVEL: 1.2 
+  TURNVEL: 0.8 #[m/s]
   MAX_VEL: 2.0
   MIN_VEL: 0.1
   VEL_STP: 0.1
