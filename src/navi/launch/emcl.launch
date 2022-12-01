@@ -9,7 +9,7 @@
   <node pkg="emcl" type="emcl_node" name="emcl"> <!-- output="screen"-->
 
     <param name="odom_freq"                 value="50"/>
-    <param name="num_particles"             value="1000"/>
+    <param name="num_particles"             value="1000"/> <!-- 2000でPCがフリーズした経験あり -->
 
     <param name="odom_frame_id"             value="odom"/>
     <param name="footprint_frame_id"        value="base_link"/>
@@ -22,7 +22,7 @@
     <param name="odom_fw_dev_per_fw"       value="0.19"/>
     <param name="odom_fw_dev_per_rot"      value="0.0001"/>
     <param name="odom_rot_dev_per_fw"      value="0.13"/>
-    <param name="odom_rot_dev_per_rot"     value="0.21"/>
+    <param name="odom_rot_dev_per_rot"     value="0.25"/>
 
     <param name="laser_likelihood_max_dist" value="0.2"/>
 

@@ -1,4 +1,10 @@
 // 大ボールを移動できるように直線+旋回を追加
+// 右上のポイントが何故か反応しない
+// 旋回が行き過ぎたり暴走する
+
+
+
+
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -161,6 +167,8 @@ int main(int argc, char** argv){
             k++;
         }
     }
+    double OnePath;
+    OnePath = sumpath / (double)sum;
   
     // pubsub宣言 //
     ros::Publisher cmd_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 10);
@@ -200,6 +208,8 @@ int main(int argc, char** argv){
         }
 
         // 動作変更 //
+        MODE = 1;
+        /*
         static int LOOP = 1;
         if(LOOP>=2){
             MODE = 1;
@@ -213,7 +223,7 @@ int main(int argc, char** argv){
         else if(!(x < BallSetBorderX && y < BallSetBorderY) && MODE == 1){
             MODE = 1;
             SETBALL = 0;
-        }
+        }*/
 
         if(MODE == 1){
             // 最も近い点を選択 //
@@ -224,60 +234,70 @@ int main(int argc, char** argv){
             npoint.points.push_back(p);
 
             // 旋回 //
+            static int interval = 0, interval2 = 0;
             if(pose >= turnpoint - TurnRadiusNum){
                 static int turncount = 0;
                 double theta = 0;
-                if(turncount % 4 == 0){ // 左上
+                interval2++;
+                cmd.linear.x = 0;
+                cmd.linear.y = 0;
+                cmd.angular.z = 0;
+                if(turncount % 4 == 0 && interval2 > FRIQUENCY){ // 左上
                     if(x >= dotpath[turnpoint][0]){
                         turncount++;
-                        turnpoint += npath[turncount];
+                        turnpoint += npath[turncount % 4];
+                        interval = 0; interval2 = 0;
                     }
                     else{
                         theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta);
-                        cmd.linear.y = TURNVEL * cos(theta);
-                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
+                        cmd.linear.y = TURNVEL * cos(theta+yaw);
+                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
+                        //ROS_INFO("x, y, z: %lf %lf %lf", cmd.linear.x, cmd.linear.y, cmd.angular.z);
                     }
                 }
-                if(turncount % 4 == 1){ // 右上
+                else if(turncount % 4 == 1 && interval2 > FRIQUENCY){ // 右上
                     if(y <= dotpath[turnpoint][0]){
                         turncount++;
-                        turnpoint += npath[turncount];
+                        turnpoint += npath[turncount % 4];
+                        interval = 0; interval2 = 0;
                     }
                     else{
                         theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta);
-                        cmd.linear.y = TURNVEL * cos(theta);
-                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
+                        cmd.linear.y = TURNVEL * cos(theta+yaw);
+                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
                     }
                 }
-                if(turncount % 4 == 2){ // 右下
+                else if(turncount % 4 == 2 && interval2 > FRIQUENCY){ // 右下
                     if(x <= dotpath[turnpoint][0]){
                         turncount++;
-                        turnpoint += npath[turncount];
+                        turnpoint += npath[turncount % 4];
+                        interval = 0; interval2 = 0;
                     }
                     else{
                         theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta);
-                        cmd.linear.y = TURNVEL * cos(theta);
-                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
+                        cmd.linear.y = TURNVEL * cos(theta+yaw);
+                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
                     }
                 }
-                if(turncount % 4 == 3){ // 左下
+                else if(turncount % 4 == 3 && interval2 > FRIQUENCY){ // 左下
                     if(y >= dotpath[turnpoint][0]){
                         turncount++;
-                        turnpoint = 0;
+                        turnpoint = npath[turncount % 4]; // 最初の旋回地点
+                        interval = 0; interval2 = 0;
                     }
                     else{
                         theta = atan2(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
-                        cmd.linear.x = - TURNVEL * sin(theta);
-                        cmd.linear.y = TURNVEL * cos(theta);
-                        cmd.angular.z = - TURNVEL / (TurnRadiusNum * lpath[turnpoint] / (double)npath[turnpoint]);
+                        cmd.linear.x = - TURNVEL * sin(theta+yaw);
+                        cmd.linear.y = TURNVEL * cos(theta+yaw);
+                        cmd.angular.z = - TURNVEL / hypot(dotpath[turnpoint][1]-y, dotpath[turnpoint][0]-x);
                     }
                 }
-                ROS_INFO("the mode is TURNING");
+                ROS_INFO("the mode is TURNING [%d]", turncount);
             }
-            else{
+            else if(interval > FRIQUENCY){
                 // 目標点の設定 //
                 pose += ahed;
                 if(pose >= sum){ // poseの繰り上げ
@@ -305,9 +325,16 @@ int main(int argc, char** argv){
                 if(VEL < MIN_VEL)  VEL = MIN_VEL;
                 cmd.linear.x = VEL;
                 cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
-                ROS_INFO("the mode is 1");
+                //ROS_INFO("the mode is 1");
+            }
+            else{
+                interval++;
+                cmd.linear.x = 0;
+                cmd.linear.y = 0;
+                cmd.angular.z = 0;
             }
         }
+        /*
         else if(MODE == 2){
             // ボール置き動作
             BallToStr = dis(x,y,BallSetGoalX, BallSetGoalY);
@@ -345,10 +372,11 @@ int main(int argc, char** argv){
                 cmd.angular.z = 0.0;
                 MODE = 1;
                 SETBALL = 2;
-                LOOP++;
+                //LOOP++;
             }
             ROS_INFO("the mode is 3");
         }
+        */
 
         // naviの停止コマンド //
         if(stop){ 
