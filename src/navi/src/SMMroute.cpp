@@ -1,4 +1,7 @@
 // 途中で経路がずれる（特にスタート地点）のを防ぐために閉ループ経路に改良したけど、今はパラメータ調整が必要なので詰んでいる
+//      2週目以降は最初の経路をパスする処理を施す
+//      ボール持ち替えでyaw姿勢を垂直に移動させる（優先度は低い）
+
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -14,7 +17,7 @@ const int pt = 26; //目標地点の個数
 //double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
 //double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
 //double goal[pt][2] = {{1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り（パラメータ調整必要）
-double goal[pt][2] = {{0.3, -0.4}, {1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
+double goal[pt][2] = {{0.3, -0.4}, {1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.3, -2.3}, {0.8, -1.8}, {0.8, -0.9}, {1.3, -0.4}, // ボール持ち替えのときだけxを大きくずらす
                                                 {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
                                                 {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り
 
@@ -22,7 +25,7 @@ int stop = 1, MODE = 1, SETBALL = 0; // 停止変数
 double VEL = 1.0; // ロボットの速度
 int FRIQUENCY = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
 double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1, UPVEL = 1.5, STDVEL = 1.0;
-double BallSetBorderX = 0.0, BallSetBorderY = 0.0, UP_RANGE = 20.0, BallToStr =  1.0, UpBorderXup = 3.3, UpBorderXdown = 1.0;
+double BallSetBorderX = 0.0, BallSetBorderY = 0.0, UP_RANGE = 20.0, BallToStr =  1.0;
 double BallSetGoalX = 0.0, BallSetGoalY = 0.0, BallSetGoalR = 0.0, StrBackGoalX = 0.0, StrBackGoalY = 0.0, StrBackGoalR = 0.0;
 
 // 第1,2引数と第3,4引数の点間距離を算出 //
@@ -113,8 +116,6 @@ int main(int argc, char** argv){
     nh.getParamCached("SMMroute/StrBackGoalY", StrBackGoalY);
     nh.getParamCached("SMMroute/StrBackGoalR", StrBackGoalR);
     nh.getParamCached("SMMroute/UP_RANGE", UP_RANGE);
-    nh.getParamCached("SMMroute/UpBorderXup", UpBorderXup);
-    nh.getParamCached("SMMroute/UpBorderXdown", UpBorderXdown);
   
     int i, j, k;
     double x = 0.0, y = 0.0, yaw = 0.0; // robot's pose
@@ -232,12 +233,8 @@ int main(int argc, char** argv){
             //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
             // 直線走行時は速度を上げる //
-            if(fabs(alpha) < deg_to_rad(UP_RANGE) && x > UpBorderXdown && x < UpBorderXup){ 
-                VEL = UPVEL;
-            }
-            else{
-                VEL = STDVEL;
-            }
+            if(fabs(alpha) < deg_to_rad(UP_RANGE) && x > goal[14][0] && x < goal[2][0])  VEL = UPVEL;
+            else  VEL = STDVEL;
 
             // 車速と角速度の算出 //
             if(VEL > MAX_VEL)  VEL = MAX_VEL;
@@ -255,7 +252,7 @@ int main(int argc, char** argv){
             if(BallToStr > BallSetGoalR){
                 cmd.linear.x = VEL/BallToStr*(x-BallSetGoalX);
                 cmd.linear.y = VEL/BallToStr*(y-BallSetGoalY);
-                cmd.angular.z = 0.0;
+                cmd.angular.z = 0; // atan2(p.y-y, p.x-x);
             }
             else{
                 cmd.linear.x = 0.0;

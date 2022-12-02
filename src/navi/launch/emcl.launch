@@ -22,7 +22,7 @@
     <param name="odom_fw_dev_per_fw"       value="0.19"/>
     <param name="odom_fw_dev_per_rot"      value="0.0001"/>
     <param name="odom_rot_dev_per_fw"      value="0.13"/>
-    <param name="odom_rot_dev_per_rot"     value="0.25"/>
+    <param name="odom_rot_dev_per_rot"     value="0.27"/>
 
     <param name="laser_likelihood_max_dist" value="0.2"/>
 

@@ -33,40 +33,36 @@ MMMroute:
   FRIQUENCY: 20
   den: 500
   ahed: 15
-  STDVEL: 1.2 # 1.0 m/s
-  UPVEL: 1.5
+  STDVEL: 1.4 # 安定限界が 1.1m/s、置き方工夫で 1.3m/s、転がるけど安定 1.4m/s
+  UPVEL: 1.7  # 安定限界が 1.5m/s、置き方工夫で 1.5m/s、転がるけど安定 1.7m/s
   MAX_VEL: 2.0
   MIN_VEL: 0.1
   VEL_STP: 0.1
-  XBORDER: 1.0
-  YBORDER: -2.0
-  CBORDER: 100
   UP_RANGE: 10 #[deg]
-  UP_YBORDER: -1.3
 
 # (12/1)スタート付近で経路からずれるバグが発生
+# (12/2)まれに追突するけど、うまく動く
 SMMroute: 
   FRIQUENCY: 20
   den: 500
   ahed: 15
-  STDVEL: 1.1 # 1.0 m/s
-  UPVEL: 1.4 # 1.6
+  STDVEL: 1.3 # m/s
+  UPVEL: 1.5  # m/s
   MAX_VEL: 2.0
   MIN_VEL: 0.1
   VEL_STP: 0.1
-  UpBorderXup: 3.1
-  UpBorderXdown: 1.2
   BallSetBorderX: 1.5
   BallSetBorderY: -1.5
-  BallSetGoalX: -0.2
+  BallSetGoalX: 0.0
   BallSetGoalY: -3.0
   BallSetGoalR: 1.0
-  StrBackGoalX: 1.0
-  StrBackGoalY: -2.0
-  StrBackGoalR: 0.5
-  UP_RANGE: 10 #[deg]
+  StrBackGoalX: 1.5
+  StrBackGoalY: -2.1
+  StrBackGoalR: 0.7 # 大きくないと大きく旋回してしまう
+  UP_RANGE: 10 # deg
 
 # (12/2)旋回がうまく行かない
+#       けれど大ボールは持ち運びできそう
 SMLroute:
   FRIQUENCY: 20
   den: 100
@@ -88,4 +84,4 @@ SMLroute:
   StrBackGoalY: -2.0
   StrBackGoalR: 0.5
   UP_RANGE: 10 #[deg]
-  TurnRadiusNum: 5 #[個]
+  TurnRadiusNum: 6 #[個]

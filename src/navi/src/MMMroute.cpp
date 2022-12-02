@@ -1,3 +1,6 @@
+// 過去最高記録は、23s
+// まれに、スタート時点付近で迷走するバグあり
+
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
@@ -101,11 +104,7 @@ int main(int argc, char** argv){
     nh.getParamCached("MMMroute/MAX_VEL", MAX_VEL);
     nh.getParamCached("MMMroute/MIN_VEL", MIN_VEL);
     nh.getParamCached("MMMroute/VEL_STP", VEL_STP);
-    nh.getParamCached("MMMroute/XBORDER", XBORDER);
-    nh.getParamCached("MMMroute/YBORDER", YBORDER);
-    nh.getParamCached("MMMroute/CBORDER", CBORDER);
     nh.getParamCached("MMMroute/UP_RANGE", UP_RANGE);
-    nh.getParamCached("MMMroute/UP_YBORDER", UP_YBORDER);
   
     int i, j, k;
     double x = 0.0, y = 0.0, yaw = 0.0; // robot's pose
@@ -205,7 +204,7 @@ int main(int argc, char** argv){
         //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
         // 直線走行時は速度を上げる //
-        if(fabs(alpha) < deg_to_rad(UP_RANGE)){ // if need y < UP_YBORDER && 
+        if(fabs(alpha) < deg_to_rad(UP_RANGE)){
             VEL = UPVEL;
         }
         else{

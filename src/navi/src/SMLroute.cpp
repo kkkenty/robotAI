@@ -1,4 +1,6 @@
 // 大ボールを移動できるように直線+旋回を追加
+//      きれいに旋回できるようにする　予めステア角を移動、回転半径を大きく指定
+//      ボール持ち替えのプログラムを加える
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -275,6 +277,7 @@ int main(int argc, char** argv){
             }
         }
         else if(MODE == 4){
+            // 旋回モード //
             static int turncount = 0;
             double theta = 0;
             interval2++;
@@ -350,7 +353,7 @@ int main(int argc, char** argv){
                     cmd.angular.z = - TURNVEL / (OnePath * (double)TurnRadiusNum);
                 }
             }
-            ROS_INFO("x, y, z: %lf %lf %lf", cmd.linear.x, cmd.linear.y, cmd.angular.z);
+            // ROS_INFO("x, y, z: %lf %lf %lf", cmd.linear.x, cmd.linear.y, rad_to_deg(cmd.angular.z));
             // ROS_INFO("the mode is TURNING [%d]", turncount);
         }
         /*
@@ -396,6 +399,8 @@ int main(int argc, char** argv){
             ROS_INFO("the mode is 3");
         }
         */
+
+        // ROS_INFO("yaw %lf", rad_to_deg(yaw));
 
         // naviの停止コマンド //
         if(stop){ 
