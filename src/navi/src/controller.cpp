@@ -13,8 +13,8 @@
 #define OBJECT_TWO 4
 #define OBJECT_SIX 3
 #define OBJECT_TEN 1
-#define deg_to_rad(deg) ((deg)/180*M_PI)
-#define rad_to_deg(rad) ((rad)/M_PI*180)
+#define deg_to_rad(deg) ((deg)/180.0*M_PI)
+#define rad_to_deg(rad) ((rad)/M_PI*180.0)
 
 msgs::SteerPower StrPwm, DrvPwm;
 int MAX_Drive_PWM = 255, MAX_Steer_PWM = 255, FRIQUENCY = 100; 
@@ -44,7 +44,7 @@ class feedback{
         float calc_deg();
         int calc_vel();
 };
-int feedback::PID(){
+inline int feedback::PID(){
     Error = Goal - Now; // P項
     Sum += (Error + ErrorPre) / 2.0; // I項
     Dif = (float)(Now - Pre) * (float)FRIQUENCY; // D項
@@ -58,7 +58,7 @@ int feedback::PID(){
     Pre = Now;
     return Power;
 }
-int feedback::FFPID(){
+inline int feedback::FFPID(){
     Error = Goal - Now; // P項
     Sum += (Error + ErrorPre) / 2.0; // I項
     Dif = (float)(Now - Pre) * (float)FRIQUENCY; // D項
@@ -72,24 +72,24 @@ int feedback::FFPID(){
     Pre = Now;
     return Power;
 }
-int feedback::daikei(){
+inline int feedback::daikei(){
   Error = Goal - Now; // P項 or 偏差
   if(Error > LIMIT) Power += ACC;
   else if(Error < -LIMIT) Power -= ACC;
   // -LIMIT <= SPEED_ERROR[i] <= LIMIT は何もなし
   return Power;
 }
-int feedback::FORWARD(){
+inline int feedback::FORWARD(){
     Power = (int)Goal;
     if(Power > 0) Power += offset;
     else if(Power < 0) Power -= offset;
     return Power;
 }
-int feedback::calc_dir(){
+inline int feedback::calc_dir(){
     if((nx*gy - gx*ny) >= 0) return 1; // 外積のz成分で回転方向を判明する
     else return -1;
 }
-float feedback::calc_deg(){
+inline float feedback::calc_deg(){
     if(abs(hypotf(gx,gy)*hypotf(nx,ny)) > 1e-5){ // 0で除算させない工夫
         float cos_theta = ( (gx*nx)+(gy*ny) ) / ( hypotf(gx,gy)*hypotf(nx,ny) );
         if(cos_theta >= 0 && cos_theta <= 1){ // 角度偏差が -90 ~ 90 deg
@@ -100,7 +100,7 @@ float feedback::calc_deg(){
         }
     }
 }
-int feedback::calc_vel(){
+inline int feedback::calc_vel(){
     if(hypotf(gx,gy)*hypotf(nx,ny) != 0){ // 角速度がともに0でない場合
         float cos_theta = (gx*nx)+(gy*ny);
         if(cos_theta < 0) return -1; // 回転角度が -90 ~ 90 degをはみ出す場合、速度を反転させる
@@ -111,7 +111,7 @@ int feedback::calc_vel(){
 
 feedback StrTwo, StrSix, StrTen, DrvTwo, DrvSix, DrvTen;
 
-void calc_inverse(){
+inline void calc_inverse(){
     // ステアの目標角度を算出（参考：chjk_node）
     vrw = RADIUS*vw;
     if(!(vx == 0 && vy == 0 && vw == 0)){
@@ -135,7 +135,7 @@ void joyCb(const sensor_msgs::Joy &joy_msg)
 {
     // 2のボタンを押せば緊急停止する
     if(joy_msg.buttons[1]){
-        state++;
+        ++state;
         if(state % 2 == 1) ROS_INFO("STOPPING!");
         else if(state % 2 == 0) ROS_INFO("RESTARTING!");
     }
@@ -172,7 +172,7 @@ void OdoCb(const msgs::SteerOdometry &Odomsg)
     DrvSix.Now = Odomsg.SpeedSix;
     DrvTen.Now = Odomsg.SpeedTen;
 }
-void ParamSet(){
+inline void ParamSet(){
     StrTwo.kp = STRKP; StrSix.kp = STRKP; StrTen.kp = STRKP;
     StrTwo.ki = STRKI; StrSix.ki = STRKI; StrTen.ki = STRKI;
     StrTwo.kd = STRKD; StrSix.kd = STRKD; StrTen.kd = STRKD;
@@ -182,7 +182,7 @@ void ParamSet(){
     StrTwo.offset = STROFFSET; StrSix.offset = STROFFSET; StrTen.offset = STROFFSET;
     DrvTwo.offset = DRVOFFSET; DrvSix.offset = DRVOFFSET; DrvTen.offset = DRVOFFSET;
 }
-void LimitPwm(){
+inline void LimitPwm(){
     if(StrPwm.SteerTwo > MAX_Steer_PWM) StrPwm.SteerTwo = MAX_Steer_PWM;
     if(StrPwm.SteerSix > MAX_Steer_PWM) StrPwm.SteerSix = MAX_Steer_PWM;
     if(StrPwm.SteerTen > MAX_Steer_PWM) StrPwm.SteerTen = MAX_Steer_PWM;

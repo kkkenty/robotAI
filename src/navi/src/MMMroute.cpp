@@ -1,5 +1,5 @@
 // 過去最高記録は、23s
-// まれに、スタート時点付近で迷走するバグあり
+//      10度の斜度で転がるボールであるか調べる
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -8,22 +8,21 @@
 #include <math.h>
 #include <sensor_msgs/Joy.h>
 #include <visualization_msgs/Marker.h>
-#define deg_to_rad(deg) ((deg)/180*M_PI)
-#define rad_to_deg(rad) ((rad)/M_PI*180)
+#define deg_to_rad(deg) ((deg)/180.0*M_PI)
+#define rad_to_deg(rad) ((rad)/M_PI*180.0)
 
-const int pt = 26; //目標地点の個数
+const int pt = 25; //目標地点の個数
 //double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
 //double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
-double goal[pt][2] = {{0.3, -0.4}, {1.0, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
-                                                {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
-                                                {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り
+double goal[pt][2] = {{1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
+                                   {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
+                                   {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り
 
 int stop = 1; // 停止変数
 double VEL = 1.0; // ロボットの速度
 int FRIQUENCY = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
 double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1, UPVEL = 1.5, STDVEL = 1.0;
-double XBORDER = 0.0, YBORDER = 0.0, UP_RANGE = 20.0, UP_YBORDER = -1.3;
-int CBORDER = 0, ROLLING = 1;
+double UP_RANGE = 20.0;
 
 // 第1,2引数と第3,4引数の点間距離を算出 //
 double dis(double x, double y, double ax, double ay){
@@ -34,7 +33,9 @@ double dis(double x, double y, double ax, double ay){
 int dismin(const double &x, const double &y, int &sum, double dotpath[][2]){
     static int nowpose = 0, lastpose = 0;
     int i, mode = 0, count = 0; // 計算状態変数
-    double mindis, nowdis; // 最小経路値、現在経路値
+    double mindis, nowdis; // 最小経路値、現在経路値    
+    if(lastpose-ahed<0) lastpose = sum + (lastpose - ahed); // 最後の場所より少し前から探索開始
+    else                lastpose -= ahed;
 
     while(count <= sum){ // 全探索しない限り周回
         for(i=lastpose;i<sum;i++){ // 目標経路の更新
@@ -183,17 +184,18 @@ int main(int argc, char** argv){
         continue;
         }
         // 最も近い点を選択 //
-        static int pose = 0;
+        static int pose = 0, inisial = 0;
         pose = dismin(x, y, sum, dotpath);
         p.x = dotpath[pose][0];
         p.y = dotpath[pose][1]; 
         npoint.points.push_back(p);
+        if(p.x >= goal[0][0] && p.x <= goal[1][0]) inisial = 1;
+        // ROS_INFO("inisial: %d   pose: %d  npath[0]/3: %d", inisial, pose, npath[0]/3);
     
         // 目標点の設定 //
         pose += ahed;
-        if(pose >= sum){ // poseの繰り上げ
-            pose -= sum;
-        }
+        if(pose >= sum)   pose -= sum;       // poseの繰り上げ
+        if(inisial == 0)  pose = npath[0]/2; // 初期の目標点は最初の経路上に設定
         p.x = dotpath[pose][0];
         p.y = dotpath[pose][1];
         gpoint.points.push_back(p);
@@ -204,12 +206,8 @@ int main(int argc, char** argv){
         //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
         // 直線走行時は速度を上げる //
-        if(fabs(alpha) < deg_to_rad(UP_RANGE)){
-            VEL = UPVEL;
-        }
-        else{
-            VEL = STDVEL;
-        }
+        if(fabs(alpha) < deg_to_rad(UP_RANGE))  VEL = UPVEL;
+        else   VEL = STDVEL;
 
         // 車速と角速度の算出 //
         if(VEL > MAX_VEL)  VEL = MAX_VEL;

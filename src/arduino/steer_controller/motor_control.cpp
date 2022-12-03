@@ -6,7 +6,7 @@ long PULSE_NOW[OBJECT_NUM] = {0};
 volatile long value[OBJECT_NUM] = {0}; // エンコーダの値(割り込みで変化)
 volatile int nowSig_A[OBJECT_NUM] = {0}, nowSig_B[OBJECT_NUM] = {0};
 volatile int oldSig_A[OBJECT_NUM] = {0}, oldSig_B[OBJECT_NUM] = {0}; // A,B相の信号
-volatile int nowState[OBJECT_NUM] = {0}, oldState[OBJECT_NUM] = {0}; // A,B相の状態 
+// volatile int nowState[OBJECT_NUM] = {0}, oldState[OBJECT_NUM] = {0}; // A,B相の状態 
 
 encoder::encoder(int A, int B){
   PinA = A; PinB = B;
@@ -46,26 +46,39 @@ void counterTEN(){
   counterPULSE(OBJECT_TEN);
 }
 void counterPULSE(int object){
+  if(nowSig_B[object] != oldSig_B[object]){
+    if(nowSig_B[object] == 0){
+      if (nowSig_A[object] == 1) --value[object];
+      else                       ++value[object];
+    }
+    else {
+      if (nowSig_A[object] == 0) --value[object];
+      else                       ++value[object];
+    }
+  }
+  oldSig_B[object] = nowSig_B[object];
+  /*
   if(nowSig_A[object] != oldSig_A[object] || nowSig_B[object] != oldSig_B[object]){
     if     (nowSig_A[object] == 0 && nowSig_B[object] == 0) nowState[object] = 0;
     else if(nowSig_A[object] == 1 && nowSig_B[object] == 0) nowState[object] = 1;
     else if(nowSig_A[object] == 1 && nowSig_B[object] == 1) nowState[object] = 2;
     else if(nowSig_A[object] == 0 && nowSig_B[object] == 1) nowState[object] = 3;
 
-    if((oldState[object] == 0 && nowState[object] == 1) || 
-       (oldState[object] == 1 && nowState[object] == 2) ||
-       (oldState[object] == 2 && nowState[object] == 3) || 
-       (oldState[object] == 3 && nowState[object] == 0)){
+    if((oldState[object] == 0 && nowState[object] == 2) || 
+       (oldState[object] == 1 && nowState[object] == 0) ||
+       (oldState[object] == 2 && nowState[object] == 0) || 
+       (oldState[object] == 3 && nowState[object] == 2)){
       value[object]++;
     }
-    else if((oldState[object] == 0 && nowState[object] == 3) || 
-            (oldState[object] == 3 && nowState[object] == 2) ||
-            (oldState[object] == 2 && nowState[object] == 1) || 
-            (oldState[object] == 1 && nowState[object] == 0)){
+    else if((oldState[object] == 0 && nowState[object] == 1) || 
+            (oldState[object] == 3 && nowState[object] == 1) ||
+            (oldState[object] == 2 && nowState[object] == 3) || 
+            (oldState[object] == 1 && nowState[object] == 3)){
       value[object]--;
     }
     oldSig_A[object] = nowSig_A[object];
     oldSig_B[object] = nowSig_B[object];
     oldState[object] = nowState[object];    
   }
+  */
 }

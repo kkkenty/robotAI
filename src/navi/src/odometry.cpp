@@ -7,8 +7,8 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Pose.h>
 #include <math.h>
-#define deg_to_rad(deg) ((deg)/180*M_PI)
-#define rad_to_deg(rad) ((rad)/M_PI*180)
+#define deg_to_rad(deg) ((deg)/180.0*M_PI)
+#define rad_to_deg(rad) ((rad)/M_PI*180.0)
 
 int STRRESOLUTION = 2560, DRVRESOLUTION = 384, FRIQUENCY = 100;
 double r = 0.133414; // 回転半径
@@ -16,7 +16,7 @@ double DIAMETER = 0.064;// 駆動輪直径
 msgs::SteerOdometry Now;
 nav_msgs::Odometry odom;
 
-geometry_msgs::Pose setPose(float x, float y, float yaw)
+inline geometry_msgs::Pose setPose(float x, float y, float yaw)
 {
     geometry_msgs::Pose output;
     output.position.x = x;
@@ -55,9 +55,9 @@ class tf_odom
     tf_odom();
     void get_odom(); // odom情報を計算、配信
 };
-tf_odom::tf_odom(){
-    for(i=0;i<3;i++){
-        for(j=0;j<6;j++){
+inline tf_odom::tf_odom(){
+    for(i=0;i<3;++i){
+        for(j=0;j<6;++j){
             A[i][j] = 0.0;
             b[j] = 0.0;
         }
@@ -66,7 +66,7 @@ tf_odom::tf_odom(){
         s[i] = 0.0;
     }
 }
-void tf_odom::get_odom()
+inline void tf_odom::get_odom()
 {
     ros::Time ros_now = ros::Time::now();
     dt = ros_now.toSec() - ros_pre.toSec();
@@ -84,8 +84,8 @@ void tf_odom::get_odom()
     A[0][0] = 9.0*rr-PP+3.0*r*s[1]*Q; A[0][1] = PQ-3.0*r*c[1]*Q;        A[0][2] = 9.0*rr-PP-3.0*r*s[0]*Q; A[0][3] = PQ+3.0*r*c[0]*Q;        A[0][4] = 9.0*rr-PP-3.0*r*s[2]*Q; A[0][5] = PQ+3.0*r*c[2]*Q;
     A[1][0] = PQ+3.0*r*s[1]*P;        A[1][1] = 9.0*rr-QQ-3.0*r*c[1]*P; A[1][2] = PQ-3.0*r*s[0]*P;        A[1][3] = 9.0*rr-QQ+3.0*r*c[0]*P; A[1][4] = PQ-3.0*r*s[2]*P;        A[1][5] = 9.0*rr-QQ+3.0*r*c[2]*P;
     A[2][0] = -3.0*Q-9.0*r*s[1];      A[2][1] = -3.0*P+9.0*r*c[1];      A[2][2] = -3.0*Q+9.0*r*s[0];      A[2][3] = -3.0*P-9.0*r*c[0];      A[2][4] = -3.0*Q+9.0*r*s[2];      A[2][5] = -3.0*P-9.0*r*c[2];
-    for(i=0;i<3;i++){
-        for(j=0;j<6;j++){
+    for(i=0;i<3;++i){
+        for(j=0;j<6;++j){
             A[i][j] /= nolA;
         }
     } 
@@ -95,9 +95,9 @@ void tf_odom::get_odom()
     b[3] = Now.SpeedSix*sin(yaw+Now.AngleSix);
     b[4] = Now.SpeedTen*cos(yaw+Now.AngleTen);
     b[5] = Now.SpeedTen*sin(yaw+Now.AngleTen);
-    for(i=0;i<3;i++){
+    for(i=0;i<3;++i){
         vel[i] = 0.0;
-        for(j=0;j<6;j++){
+        for(j=0;j<6;++j){
             vel[i] += A[i][j]*b[j]; // vel = A*b
         }
     }

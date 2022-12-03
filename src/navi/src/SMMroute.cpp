@@ -1,7 +1,5 @@
-// 途中で経路がずれる（特にスタート地点）のを防ぐために閉ループ経路に改良したけど、今はパラメータ調整が必要なので詰んでいる
-//      2週目以降は最初の経路をパスする処理を施す
 //      ボール持ち替えでyaw姿勢を垂直に移動させる（優先度は低い）
-
+// (一度だけ)Mismatched protocol version in packet ('\xff'): lost sync or rosserial_python is from different ros release than the rosserial client
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -10,18 +8,18 @@
 #include <math.h>
 #include <sensor_msgs/Joy.h>
 #include <visualization_msgs/Marker.h>
-#define deg_to_rad(deg) ((deg)/180*M_PI)
-#define rad_to_deg(rad) ((rad)/M_PI*180)
+#define deg_to_rad(deg) ((deg)/180.0*M_PI)
+#define rad_to_deg(rad) ((rad)/M_PI*180.0)
 
-const int pt = 26; //目標地点の個数
+const int pt = 25; //目標地点の個数
 //double goal[pt][2] = {{0.3, -0.6}, {4.0, -0.6}, {4.0, -2.1}, {0.3, -2.1}, {0.3, -0.6}};  // 時計回り
 //double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
 //double goal[pt][2] = {{1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り（パラメータ調整必要）
-double goal[pt][2] = {{0.3, -0.4}, {1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.3, -2.3}, {0.8, -1.8}, {0.8, -0.9}, {1.3, -0.4}, // ボール持ち替えのときだけxを大きくずらす
-                                                {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
-                                                {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り
+double goal[pt][2] = {{1.2, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.4, -2.3}, {0.9, -1.8}, {0.9, -0.9}, {1.4, -0.4}, // ボール持ち替えのときだけxを大きくずらす
+                                   {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}, 
+                                   {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.2, -2.3}, {0.7, -1.8}, {0.7, -0.9}, {1.2, -0.4}};  // 緩やかな時計回り
 
-int stop = 1, MODE = 1, SETBALL = 0; // 停止変数
+int stop = 1, MODE = 1; // 停止変数
 double VEL = 1.0; // ロボットの速度
 int FRIQUENCY = 20, den = 100, ahed = 5; // 経路分割数、lookaheddistance
 double MAX_VEL = 2.0, MIN_VEL = 0.1, VEL_STP = 0.1, UPVEL = 1.5, STDVEL = 1.0;
@@ -38,6 +36,8 @@ int dismin(const double &x, const double &y, int &sum, double dotpath[][2]){
     static int nowpose = 0, lastpose = 0;
     int i, mode = 0, count = 0; // 計算状態変数
     double mindis, nowdis; // 最小経路値、現在経路値
+    if(lastpose-ahed<0) lastpose = sum + (lastpose - ahed); // 最後の場所より少し前から探索開始
+    else                lastpose -= ahed;
 
     while(count <= sum){ // 全探索しない限り周回
         for(i=lastpose;i<sum;i++){ // 目標経路の更新
@@ -195,34 +195,24 @@ int main(int argc, char** argv){
         }
 
         // 動作変更 //
-        static int LOOP = 1;
-        if(LOOP>=2){
-            MODE = 1;
-            SETBALL = 2;
-        }
-        if((x < BallSetBorderX && y < BallSetBorderY) && SETBALL == 0) MODE = 2; 
-        else if((x < BallSetBorderX && y < BallSetBorderY) && SETBALL == 1) MODE = 3;
-        else if((x < BallSetBorderX && y < BallSetBorderY) && SETBALL == 2) MODE = 1;
-        else if(!(x < BallSetBorderX && y < BallSetBorderY) && MODE == 2) MODE = 2;
-        else if(!(x < BallSetBorderX && y < BallSetBorderY) && MODE == 3) MODE = 3;
-        else if(!(x < BallSetBorderX && y < BallSetBorderY) && MODE == 1){
-            MODE = 1;
-            SETBALL = 0;
-        }
+        static int SETBALL = 0;
+        if((x < BallSetBorderX && y < BallSetBorderY) && SETBALL == 0)  MODE = 2; 
+        else if(SETBALL == 1)                                           MODE = 3;
+        else if(SETBALL == 2)                                           MODE = 1;
 
         if(MODE == 1){
             // 最も近い点を選択 //
-            static int pose = 0;
+            static int pose = 0, inisial = 0;
             pose = dismin(x, y, sum, dotpath);
             p.x = dotpath[pose][0];
             p.y = dotpath[pose][1]; 
             npoint.points.push_back(p);
+            if(p.x >= goal[0][0] && p.x <= goal[1][0]) inisial = 1;
     
             // 目標点の設定 //
             pose += ahed;
-            if(pose >= sum){ // poseの繰り上げ
-                pose -= sum;
-            }
+            if(pose >= sum)   pose -= sum;       // poseの繰り上げ
+            if(inisial == 0)  pose = npath[0]/2; // 初期の目標点は最初の経路上に設定
             p.x = dotpath[pose][0];
             p.y = dotpath[pose][1];
             gpoint.points.push_back(p);
@@ -233,18 +223,18 @@ int main(int argc, char** argv){
             //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
             // 直線走行時は速度を上げる //
-            if(fabs(alpha) < deg_to_rad(UP_RANGE) && x > goal[14][0] && x < goal[2][0])  VEL = UPVEL;
-            else  VEL = STDVEL;
+            if(fabs(alpha) < deg_to_rad(UP_RANGE) && x >= goal[0][0] && x <= goal[1][0])  VEL = UPVEL;
+            else                                                                          VEL = STDVEL;
 
             // 車速と角速度の算出 //
             if(VEL > MAX_VEL)  VEL = MAX_VEL;
             if(VEL < MIN_VEL)  VEL = MIN_VEL;
             cmd.linear.x = VEL;
             cmd.angular.z = 2.0 * VEL * sin(alpha) / L;
-            ROS_INFO("the mode is 1");
+            ROS_INFO("mode is 1");
         }
         else if(MODE == 2){
-            // ボール置き動作
+            // ボール置き動作 //
             BallToStr = dis(x,y,BallSetGoalX, BallSetGoalY);
             p.x = BallSetGoalX;
             p.y = BallSetGoalY; 
@@ -252,7 +242,12 @@ int main(int argc, char** argv){
             if(BallToStr > BallSetGoalR){
                 cmd.linear.x = VEL/BallToStr*(x-BallSetGoalX);
                 cmd.linear.y = VEL/BallToStr*(y-BallSetGoalY);
-                cmd.angular.z = 0; // atan2(p.y-y, p.x-x);
+                cmd.angular.z = 0.0;
+                /*
+                alpha = atan2(BallSetGoalY - y, BallSetGoalX - x) - yaw; // パラメータ調整が必要
+                L = dis(x, y, BallSetGoalX, BallSetGoalY);
+                cmd.angular.z = 2.0 * VEL * sin(alpha) / L; 
+                */
             }
             else{
                 cmd.linear.x = 0.0;
@@ -261,15 +256,15 @@ int main(int argc, char** argv){
                 MODE = 3;   
                 SETBALL = 1;                
             }
-            ROS_INFO("the mode is 2");
+            ROS_INFO("mode is 2");
         }
         else if(MODE == 3){
-            // バック動作
+            // バック動作 // 
             BallToStr = dis(x,y,StrBackGoalX, StrBackGoalY);
             p.x = StrBackGoalX;
             p.y = StrBackGoalY; 
             gpoint.points.push_back(p);                
-            if(BallToStr > StrBackGoalR){ // 0.3
+            if(BallToStr > StrBackGoalR){
                 cmd.linear.x = VEL/BallToStr*(x-StrBackGoalX);
                 cmd.linear.y = VEL/BallToStr*(y-StrBackGoalY);
                 cmd.angular.z = 0.0;
@@ -280,9 +275,8 @@ int main(int argc, char** argv){
                 cmd.angular.z = 0.0;
                 MODE = 1;
                 SETBALL = 2;
-                LOOP++;
             }
-            ROS_INFO("the mode is 3");
+            ROS_INFO("mode is 3");
         }    
 
         // naviの停止コマンド //

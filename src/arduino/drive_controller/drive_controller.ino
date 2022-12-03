@@ -66,7 +66,6 @@ void loop() {
   Serial.print("  :  ");
   Serial.println(value[OBJECT_TEN]);
   */
-  
   // 速度の出力 //
   motorTWO.setSpeed(PWM[OBJECT_TWO]);
   motorSIX.setSpeed(PWM[OBJECT_SIX]);

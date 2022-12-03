@@ -46,6 +46,17 @@ void counterTEN(){
   counterPULSE(OBJECT_TEN);
 }
 void counterPULSE(int object){
+  if(nowSig_A[object] != oldSig_A[object]){
+    if(nowSig_A[object] == 0){
+      if(nowSig_B[object] == 0) --value[object];
+      else                      ++value[object];
+    }
+    else{
+      if(nowSig_B[object] == 0) ++value[object];
+      else                      --value[object];
+    }
+  }
+  oldSig_A[object] = nowSig_A[object];
   /*
   if(nowSig_A[object] != oldSig_A[object] || nowSig_B[object] != oldSig_B[object]){
     if     (nowSig_A[object] == 0 && nowSig_B[object] == 0) nowState[object] = 0;
@@ -69,7 +80,7 @@ void counterPULSE(int object){
     oldSig_B[object] = nowSig_B[object];
     oldState[object] = nowState[object];    
   }*/
-
+  /*
   if(nowSig_A[object] != oldSig_A[object] || nowSig_B[object] != oldSig_B[object]){
     if     (nowSig_A[object] == 0 && nowSig_B[object] == 0) nowState[object] = 0;
     else if(nowSig_A[object] == 1 && nowSig_B[object] == 0) nowState[object] = 1;
@@ -92,5 +103,5 @@ void counterPULSE(int object){
     oldSig_B[object] = nowSig_B[object];
     oldState[object] = nowState[object];    
   }
-  
+  */
 }

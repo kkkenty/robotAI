@@ -2,7 +2,7 @@ controller:
   # Fixed parameter
   DIAMETER: 0.064
   RADIUS: 0.133414
-  STRRESOLUTION: 2560
+  STRRESOLUTION: 1280 # 2560
   DRVRESOLUTION: 384 # [gear] from 15 to 24, 240 PPR
   # Steer Paramete
   MAX_Steer_PWM: 235 # 240くらいからオーバーシュートする
@@ -29,6 +29,7 @@ odometry:
   FRIQUENCY: 100
 
 # (12/2)動作確認済み
+# (12/3)動作確認済み、ボールの空気圧によって安定性が変化
 MMMroute:
   FRIQUENCY: 20
   den: 500
@@ -42,16 +43,17 @@ MMMroute:
 
 # (12/1)スタート付近で経路からずれるバグが発生
 # (12/2)まれに追突するけど、うまく動く
+# (12/3)衝突問題は解決、たぶんうまく動く
 SMMroute: 
   FRIQUENCY: 20
   den: 500
-  ahed: 15
+  ahed: 20
   STDVEL: 1.3 # m/s
   UPVEL: 1.5  # m/s
   MAX_VEL: 2.0
   MIN_VEL: 0.1
   VEL_STP: 0.1
-  BallSetBorderX: 1.5
+  BallSetBorderX: 2.5
   BallSetBorderY: -1.5
   BallSetGoalX: 0.0
   BallSetGoalY: -3.0
@@ -65,23 +67,24 @@ SMMroute:
 #       けれど大ボールは持ち運びできそう
 SMLroute:
   FRIQUENCY: 20
-  den: 100
-  ahed: 10
-  STDVEL: 1.0 # 1.0 m/s
-  UPVEL: 1.2 
-  TURNVEL: 0.8 #[m/s]
+  den: 500
+  ahed: 15
+  STDVEL: 1.2 # 1.0 m/s
+  UPVEL: 1.4 
+  TURNVEL: 1.0 # m/s
+  BACKVEL: 0.5 # linear.x m/s
   MAX_VEL: 2.0
   MIN_VEL: 0.1
   VEL_STP: 0.1
-  UpBorderXup: 3.1
-  UpBorderXdown: 1.2
-  BallSetBorderX: 1.5
+  BallSetBorderX: 2.5
   BallSetBorderY: -1.5
-  BallSetGoalX: -0.2
-  BallSetGoalY: -3.0
+  BallSetGoalX: 0.0
+  BallSetGoalY: -2.8
   BallSetGoalR: 1.0
-  StrBackGoalX: 1.0
-  StrBackGoalY: -2.0
-  StrBackGoalR: 0.5
-  UP_RANGE: 10 #[deg]
-  TurnRadiusNum: 6 #[個]
+  StrBackGoalX: 1.5
+  StrBackGoalY: -2.1
+  StrBackGoalR: 0.7
+  UP_RANGE: 10 # deg
+  TurnRadius: 0.6 # m
+  TurnAngleError: 25 # deg > 0
+  STAYTIME: 20 # counts

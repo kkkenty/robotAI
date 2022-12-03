@@ -1,5 +1,4 @@
 // Steer用プログラム
-// value = 55 / 22 * ステアの回転 * 2048 * 4 = 20480 * ステアの回転
 #include "motor_control.h"
 #include <ros.h>
 #include "msgs/SteerSensor.h"
@@ -28,13 +27,13 @@ void powerCb(const msgs::SteerPower& get_msg){
 ros::Subscriber<msgs::SteerPower> sub("StrPower", &powerCb);
 
 void setup() {
-  nh.getHardware()->setBaud(57600);
+  nh.getHardware()->setBaud(115200);
   attachInterrupt(5, counterTWO, CHANGE);
-  attachInterrupt(4, counterTWO, CHANGE);
+  //attachInterrupt(4, counterTWO, CHANGE);
   attachInterrupt(3, counterTEN, CHANGE);
-  attachInterrupt(2, counterTEN, CHANGE);
+  //attachInterrupt(2, counterTEN, CHANGE);
   attachInterrupt(0, counterSIX, CHANGE);
-  attachInterrupt(1, counterSIX, CHANGE);
+  //attachInterrupt(1, counterSIX, CHANGE);
   nh.initNode();
   nh.advertise(pub);
   nh.subscribe(sub);

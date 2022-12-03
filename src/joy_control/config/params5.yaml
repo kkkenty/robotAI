@@ -2,7 +2,7 @@ controller:
   # fixed parameter
   DIAMETER: 0.064
   RADIUS: 0.133414
-  STRRESOLUTION: 2560
+  STRRESOLUTION: 1280
   DRVRESOLUTION: 384 # [gear] from 15 to 24, 240 PPR
   # Steer Paramete
   MAX_Steer_PWM: 235 # 240くらいからオーバーシュートする

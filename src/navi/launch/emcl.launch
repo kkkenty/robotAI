@@ -9,7 +9,7 @@
   <node pkg="emcl" type="emcl_node" name="emcl"> <!-- output="screen"-->
 
     <param name="odom_freq"                 value="50"/>
-    <param name="num_particles"             value="1000"/> <!-- 2000でPCがフリーズした経験あり -->
+    <param name="num_particles"             value="750"/> <!-- 2000でPCがフリーズした経験あり -->
 
     <param name="odom_frame_id"             value="odom"/>
     <param name="footprint_frame_id"        value="base_link"/>
