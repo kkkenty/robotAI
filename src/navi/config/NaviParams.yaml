@@ -71,7 +71,7 @@ SMLroute:
   ahed: 15
   STDVEL: 1.2 # 1.0 m/s
   UPVEL: 1.4 
-  TURNVEL: 0.95 # m/s
+  TURNVEL: 1.0 # m/s
   BACKVEL: 0.5 # linear.x m/s
   MAX_VEL: 2.0
   MIN_VEL: 0.1
