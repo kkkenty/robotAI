@@ -17,7 +17,7 @@ controller:
   DRVKD: 0.0
   DRVOFFSET: 0
   # Others
-  FRIQUENCY: 100
+  FRIQUENCY: 75
   LIMIT: 0.25
   ACC: 5
   STEP: 10 # FF 実装のためのプログラム
@@ -26,7 +26,7 @@ controller:
   KW: 2.5
 
 odometry: 
-  FRIQUENCY: 100
+  FRIQUENCY: 75
 
 # (12/2)動作確認済み
 # (12/3)動作確認済み、ボールの空気圧によって安定性が変化
@@ -71,7 +71,7 @@ SMLroute:
   ahed: 15
   STDVEL: 1.2 # 1.0 m/s
   UPVEL: 1.4 
-  TURNVEL: 1.0 # m/s
+  TURNVEL: 0.95 # m/s
   BACKVEL: 0.5 # linear.x m/s
   MAX_VEL: 2.0
   MIN_VEL: 0.1
@@ -79,12 +79,12 @@ SMLroute:
   BallSetBorderX: 2.5
   BallSetBorderY: -1.5
   BallSetGoalX: 0.0
-  BallSetGoalY: -2.8
+  BallSetGoalY: -2.6
   BallSetGoalR: 1.0
-  StrBackGoalX: 1.5
+  StrBackGoalX: 1.75
   StrBackGoalY: -2.1
   StrBackGoalR: 0.7
   UP_RANGE: 10 # deg
-  TurnRadius: 0.6 # m
-  TurnAngleError: 25 # deg > 0
+  TurnRadius: 0.63 # m
+  TurnAngleError: 22 # deg > 0
   STAYTIME: 20 # counts

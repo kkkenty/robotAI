@@ -4,6 +4,7 @@
 //      最初から壁に突っ込む問題を解決する、処理性能の問題かなあ...
 // [ERROR] [1670058293.159778]: Mismatched protocol version in packet ('\xff'): lost sync or rosserial_python is from different ros release than the rosserial client
 // [ERROR] [1670058946.703050]: Lost sync with device, restarting...
+// [ERROR] [1670113230.454472370]: Error count exceeded limit, reconnecting.
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -20,7 +21,7 @@ const int pt = 20; //目標地点の個数
 // double goal[pt][2] = {{0.3, -2.1}, {4.0, -2.1}, {4.0, -0.6}, {0.3, -0.6}, {0.3, -2.1}};  // 反時計周り
 const double goal[pt][2] = {{1.4, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.25, -2.3},  // 1個目
                             {0.75, -1.8}, {0.75, -0.9}, {1.25, -0.4}, {3.1, -0.4}, {3.6, -0.9}, {3.6, -1.8}, {3.1, -2.3}, {1.4, -2.3},  // 2個目
-                            {0.65, -2.2}, {0.65, -0.35}, {3.9, -0.5}, {3.9, -2.2}, {0.65, -2.2}, {0.65, -0.4}};  // 3個目
+                            {0.8, -1.8}, {0.85, -0.4}, {4.1, -1.0}, {3.6, -2.3}, {0.5, -1.5}, {0.65, -0.4}};  // 3個目
 const int FirstTurnPoint = 14; // 最初に旋回する点の番号
 
 int stop = 1; // 停止変数
@@ -40,8 +41,10 @@ inline double dis(double x, double y, double ax, double ay){
 // 最も近い点を選択(局所解は無いと仮定) //
 inline int dismin(const double &x, const double &y, int &sum, double dotpath[][2]){
     static int nowpose = 0, lastpose = 0;
-    int i, mode = 0, count = 0; // 計算状態変数
+    int i, mode = 0, count = 0, returnpose = 0; // 計算状態変数
     double mindis, nowdis; // 最小経路値、現在経路値
+
+    returnpose = lastpose; // 現在地が最短の場合
     if(lastpose-ahed<0) lastpose = sum + (lastpose - ahed); // 最後の場所より少し前から探索開始
     else                lastpose -= ahed;
 
@@ -64,13 +67,14 @@ inline int dismin(const double &x, const double &y, int &sum, double dotpath[][2
                 lastpose = nowpose; // 現在の位置を保持
                 return nowpose;
             }
-            if(count > sum){ // 初期位置が最短の場合
+            if(count >= sum){ // 初期位置が最短の場合
                 lastpose = nowpose; // 現在の位置を保持
                 return nowpose;
             }
         }
         lastpose = 0;
     }
+    return returnpose;
 }
 
 // joyのcallback関数 //
@@ -226,7 +230,8 @@ int main(int argc, char** argv){
             if(p.x >= goal[0][0] && p.x <= goal[1][0] && p.y >= (goal[2][1]+goal[3][1])/2.0 && SETBALL%6 == 2) ++SETBALL; // 地図の左半分に位置すれば、ボール置き換え可能
 
             static int turning = 0;
-            if((dis(x, y, goal[turnpoint][0], goal[turnpoint][1]) <= TurnRadius && SETBALL%6 == 5) || (turning >= 2)){ // 一度turnpointに入るとずっと行われる
+            if(((dis(x, y, goal[turnpoint][0], goal[turnpoint][1]) <= TurnRadius && SETBALL%6 == 5) || (turning >= 2))){ 
+                // || ((dis(x, y, goal[turnpoint][0], goal[turnpoint][1]) <= TurnRadius && SETBALL%6 == 5)) && turnpoint == FirstTurnPoint){ // 一度turnpointに入るとずっと行われる
                 // 旋回モード //
                 static int turncount = 0;
                 bool turnlimit = false;
@@ -265,7 +270,8 @@ int main(int argc, char** argv){
                     cmd.angular.z = 0;
                 }
                 // ROS_INFO("x, y, z: %lf %lf %lf", cmd.linear.x, cmd.linear.y, rad_to_deg(cmd.angular.z));
-                ROS_INFO("turncount: %d", turncount);
+                // ROS_INFO("turncount: %d", turncount);
+                ROS_INFO("turning %d", turning);
             }
             else if(interval >= STAYTIME){
                 // Pure Pursuit //
@@ -273,13 +279,19 @@ int main(int argc, char** argv){
                 pose += ahed;
                 if(pose >= sum)   pose -= sum;       // poseの繰り上げ
                 if(inisial == 0)  pose = npath[0]*2/3; // 初期の目標点は最初の経路上に設定
-                p.x = dotpath[pose][0];
-                p.y = dotpath[pose][1];
+                if(SETBALL%6 == 5){ // 大ボールのときはgoalを追いかける
+                    p.x = goal[turnpoint][0];
+                    p.y = goal[turnpoint][1];
+                }
+                else{ // それ以外
+                    p.x = dotpath[pose][0];
+                    p.y = dotpath[pose][1];
+                }
                 gpoint.points.push_back(p);
     
                 // 目標点との相対的な角度、距離の算出 //
-                alpha = atan2(dotpath[pose][1] - y, dotpath[pose][0] - x) - yaw;
-                L = dis(x, y, dotpath[pose][0], dotpath[pose][1]);
+                alpha = atan2(p.y - y, p.x - x) - yaw;
+                L = dis(x, y, p.x, p.y);
                 //ROS_INFO("alpha: %lf", rad_to_deg(alpha));
 
                 // 直線走行時は速度を上げる //
@@ -338,7 +350,7 @@ int main(int argc, char** argv){
                 ++SETBALL;
             }
         }
-        ROS_INFO("mode: %d",MODE);
+        // ROS_INFO("mode: %d",MODE);
 
         // naviの停止コマンド //
         if(stop){ 
